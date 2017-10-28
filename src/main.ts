@@ -3,6 +3,8 @@ import * as PIXI from "pixi.js";
 import { ok } from "./import-example";
 console.log(`import ${ok()}`);
 
+const fpsLabel = document.getElementById("fps-label") as HTMLDivElement;
+
 const width = 256;
 const height = 256;
 
@@ -37,8 +39,20 @@ const ball = {
 }
 
 
+let lastUpdateTime: number;
+let ups: number;
 
 function update() {
+    let now = Date.now() / 1000;
+    if (lastUpdateTime) {
+        const dt = now - lastUpdateTime;
+        ups = ups * 0.95 + 1 / dt * 0.05;
+    } else {
+        ups = 0;
+    }
+    lastUpdateTime = now;
+
+
     ball.velocity.y += .1; // gravity
     ball.position.x += ball.velocity.x;
     ball.position.y += ball.velocity.y;
@@ -59,14 +73,30 @@ function update() {
         ball.velocity.y = -ball.velocity.y;
     }
 
-    setTimeout(update, 10); // 100 UPS
+    setTimeout(update, 1);
 }
 
-function render(timestamp: number) {
+let lastRenderTime: number;
+let fps: number;
+
+function render() {
+    let now = Date.now() / 1000;
+    if (lastRenderTime) {
+        const dt = now - lastRenderTime;
+        fps = fps * 0.95 + 1 / dt * 0.05;
+    } else {
+        fps = 0;
+    }
+    lastRenderTime = now;
+    
     ball.sprite.x = ball.position.x;
     ball.sprite.y = ball.position.y;
 
     renderer.render(stage);
+
+
+    fpsLabel.innerText = `FPS ${fps && fps.toFixed(2)} / UPS ${ups && ups.toFixed(2)}`;
+
     requestAnimationFrame(render);
 }
 

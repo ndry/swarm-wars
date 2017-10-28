@@ -2,7 +2,7 @@
   "name": "swarm-wars",
   "private": true,
   "scripts": {
-    "start": "http-server -p 45830 -o http://127.0.0.1:45830/"
+    "start": "http-server -p 45823 -o http://127.0.0.1:45823/ -c-1"
   },
   "devDependencies": {
     "http-server": "^0.10.0",
