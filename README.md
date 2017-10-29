@@ -2,6 +2,6 @@
 
 ```
 npm i
-jspm i
+tsc
 npm start
 ```

@@ -1,7 +1,18 @@
 {
     "compilerOptions": {
+        "outFile": "./public/app.js",
+        "module": "system",
+        
+        "sourceMap": true,
+        "watch": true,
+
         "noImplicitAny": true,
-        "sourceMap": true
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noImplicitUseStrict": true,
+        "strictNullChecks": false,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false
     },
     "include": [
         "./src/**/*"
