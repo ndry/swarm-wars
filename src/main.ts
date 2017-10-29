@@ -1,41 +1,36 @@
 import * as PIXI from "pixi.js";
+import * as physics from "./physics";
+import * as game from "./game";
 
-import { ok } from "./import-example";
-console.log(`import ${ok()}`);
+import { Ball } from "./Ball";
 
 const fpsLabel = document.getElementById("fps-label") as HTMLDivElement;
 
-const width = 256;
-const height = 256;
+const width = 1000;
+const height = 500;
 
 const renderer = PIXI.autoDetectRenderer(width, height);
 document.body.appendChild(renderer.view);
 
-const stage = new PIXI.Container();
+const gameContainer = new game.Container();
+gameContainer.pixiContainer = new PIXI.Container();
+gameContainer.physicsContainer = new physics.Container(width, height);
 
+gameContainer.add((() => {
+    const ball = new Ball(100);
+    ball.physicsObject.position.set([width / 2, height / 2]);
+    ball.physicsObject.density = 10;
+    return ball;
+})());
 
-
-const g = new PIXI.Graphics();
-g.beginFill(0x00ff00);
-g.lineStyle(0);
-g.drawCircle(0, 0, 10);
-g.endFill();
-
-const ball = {
-    velocity: {
-        x: 5,
-        y: 3,
-    },
-    position: {
-        x: 100,
-        y: 200
-    },
-    sprite: (() => {
-        const sprite = new PIXI.Sprite(g.generateCanvasTexture());
-        sprite.anchor.set(.5, .5);
-        stage.addChild(sprite);
-        return sprite;
-    })()
+for (let i = 0; i < 100; i++) {
+    gameContainer.add((() => {
+        const ball = new Ball(
+            1 + Math.random() * 4);
+            ball.physicsObject.position.set([Math.random() * width, Math.random() * height]);
+            ball.physicsObject.velocity.set([Math.random() * 1, Math.random() * 1]);
+            return ball;
+    })());
 }
 
 
@@ -43,44 +38,25 @@ let lastUpdateTime: number;
 let ups: number;
 
 function update() {
-    let now = Date.now() / 1000;
+    let now = window.performance.now() / 1000;
+    let dt = 0;
     if (lastUpdateTime) {
-        const dt = now - lastUpdateTime;
+        dt = now - lastUpdateTime;
         ups = ups * 0.95 + 1 / dt * 0.05;
     } else {
         ups = 0;
     }
     lastUpdateTime = now;
 
-
-    ball.velocity.y += .1; // gravity
-    ball.position.x += ball.velocity.x;
-    ball.position.y += ball.velocity.y;
-    if (ball.position.x < 0) {
-        ball.position.x = -ball.position.x;
-        ball.velocity.x = -ball.velocity.x;
-    }
-    if (ball.position.y < 0) {
-        ball.position.y = -ball.position.y;
-        ball.velocity.y = -ball.velocity.y;
-    }
-    if (ball.position.x >= width) {
-        ball.position.x = width - ball.position.x + width;
-        ball.velocity.x = -ball.velocity.x;
-    }
-    if (ball.position.y >= width) {
-        ball.position.y = height - ball.position.y + height;
-        ball.velocity.y = -ball.velocity.y;
-    }
-
-    setTimeout(update, 1);
+    gameContainer.physicsContainer.update(1);
+    gameContainer.update(1);
 }
 
 let lastRenderTime: number;
 let fps: number;
 
 function render() {
-    let now = Date.now() / 1000;
+    let now = window.performance.now() / 1000;
     if (lastRenderTime) {
         const dt = now - lastRenderTime;
         fps = fps * 0.95 + 1 / dt * 0.05;
@@ -88,17 +64,14 @@ function render() {
         fps = 0;
     }
     lastRenderTime = now;
-    
-    ball.sprite.x = ball.position.x;
-    ball.sprite.y = ball.position.y;
 
-    renderer.render(stage);
-
+    gameContainer.render();
+    renderer.render(gameContainer.pixiContainer);
 
     fpsLabel.innerText = `FPS ${fps && fps.toFixed(2)} / UPS ${ups && ups.toFixed(2)}`;
 
     requestAnimationFrame(render);
 }
 
-setTimeout(update);
+const updater = setInterval(update, 20);
 requestAnimationFrame(render);

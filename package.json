@@ -9,13 +9,16 @@
     "jspm": "^0.17.0-beta.47"
   },
   "dependencies": {
+    "@types/gl-matrix": "^2.3.2",
     "@types/pixi.js": "^4.5.7",
+    "gl-matrix": "^2.4.0",
     "pixi.js": "^4.6.0"
   },
   "jspm": {
     "name": "swarm-wars",
     "main": "main",
     "dependencies": {
+      "gl-matrix": "npm:gl-matrix@^2.4.0",
       "pixi.js": "npm:pixi.js@^4.6.0"
     },
     "devDependencies": {
