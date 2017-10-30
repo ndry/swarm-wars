@@ -213,78 +213,166 @@ System.register("Ball", ["pixi.js", "physics", "game"], function (exports_3, con
         }
     };
 });
-System.register("main", ["pixi.js", "physics", "game", "Ball"], function (exports_4, context_4) {
+System.register("main", ["box2dweb"], function (exports_4, context_4) {
     var __moduleName = context_4 && context_4.id;
+    function handleMouseDown(e) {
+        isMouseDown = true;
+        handleMouseMove(e);
+        document.addEventListener("mousemove", handleMouseMove, true);
+        document.addEventListener("touchmove", handleMouseMove, true);
+    }
+    function handleMouseUp() {
+        document.removeEventListener("mousemove", handleMouseMove, true);
+        document.removeEventListener("touchmove", handleMouseMove, true);
+        isMouseDown = false;
+        mouseX = undefined;
+        mouseY = undefined;
+    }
+    function handleMouseMove(e) {
+        var clientX, clientY;
+        if (e.clientX) {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        else if (e.changedTouches && e.changedTouches.length > 0) {
+            var touch = e.changedTouches[e.changedTouches.length - 1];
+            clientX = touch.clientX;
+            clientY = touch.clientY;
+        }
+        else {
+            return;
+        }
+        mouseX = (clientX - canvasPosition.x) / 30;
+        mouseY = (clientY - canvasPosition.y) / 30;
+        e.preventDefault();
+    }
+    function getBodyAtMouse() {
+        mousePVec = new b2Vec2(mouseX, mouseY);
+        var aabb = new b2AABB();
+        aabb.lowerBound.Set(mouseX - 0.001, mouseY - 0.001);
+        aabb.upperBound.Set(mouseX + 0.001, mouseY + 0.001);
+        // Query the world for overlapping shapes.
+        selectedBody = null;
+        world.QueryAABB(getBodyCB, aabb);
+        return selectedBody;
+    }
+    function getBodyCB(fixture) {
+        if (fixture.GetBody().GetType() != b2Body.b2_staticBody) {
+            if (fixture.GetShape().TestPoint(fixture.GetBody().GetTransform(), mousePVec)) {
+                selectedBody = fixture.GetBody();
+                return false;
+            }
+        }
+        return true;
+    }
+    //update
     function update() {
-        var now = window.performance.now() / 1000;
-        var dt = 0;
-        if (lastUpdateTime) {
-            dt = now - lastUpdateTime;
-            ups = ups * 0.95 + 1 / dt * 0.05;
+        if (isMouseDown && (!mouseJoint)) {
+            var body = getBodyAtMouse();
+            if (body) {
+                var md = new b2MouseJointDef();
+                md.bodyA = world.GetGroundBody();
+                md.bodyB = body;
+                md.target.Set(mouseX, mouseY);
+                md.collideConnected = true;
+                md.maxForce = 300.0 * body.GetMass();
+                mouseJoint = world.CreateJoint(md);
+                body.SetAwake(true);
+            }
         }
-        else {
-            ups = 0;
+        if (mouseJoint) {
+            if (isMouseDown) {
+                mouseJoint.SetTarget(new b2Vec2(mouseX, mouseY));
+            }
+            else {
+                world.DestroyJoint(mouseJoint);
+                mouseJoint = null;
+            }
         }
-        lastUpdateTime = now;
-        gameContainer.physicsContainer.update(1);
-        gameContainer.update(1);
+        world.Step(1 / 60, 10, 10);
+        world.DrawDebugData();
+        world.ClearForces();
     }
-    function render() {
-        var now = window.performance.now() / 1000;
-        if (lastRenderTime) {
-            var dt = now - lastRenderTime;
-            fps = fps * 0.95 + 1 / dt * 0.05;
+    //helpers
+    //http://js-tut.aardon.de/js-tut/tutorial/position.html
+    function getElementPosition(element) {
+        var elem = element, tagname = "", x = 0, y = 0;
+        while ((typeof (elem) == "object") && (typeof (elem.tagName) != "undefined")) {
+            y += elem.offsetTop;
+            x += elem.offsetLeft;
+            tagname = elem.tagName.toUpperCase();
+            if (tagname == "BODY")
+                elem = 0;
+            if (typeof (elem) == "object") {
+                if (typeof (elem.offsetParent) == "object")
+                    elem = elem.offsetParent;
+            }
         }
-        else {
-            fps = 0;
-        }
-        lastRenderTime = now;
-        gameContainer.render();
-        renderer.render(gameContainer.pixiContainer);
-        fpsLabel.innerText = "FPS " + (fps && fps.toFixed(2)) + " / UPS " + (ups && ups.toFixed(2));
-        requestAnimationFrame(render);
+        return { x: x, y: y };
     }
-    var PIXI, physics, game, Ball_1, fpsLabel, width, height, renderer, gameContainer, lastUpdateTime, ups, lastRenderTime, fps, updater;
+    var box2dweb_1, b2Vec2, b2AABB, b2BodyDef, b2Body, b2FixtureDef, b2Fixture, b2World, b2MassData, b2PolygonShape, b2CircleShape, b2DebugDraw, b2MouseJointDef, world, fixDef, bodyDef, i, debugDraw, mouseX, mouseY, mousePVec, isMouseDown, selectedBody, mouseJoint, canvasPosition;
     return {
         setters: [
-            function (PIXI_2) {
-                PIXI = PIXI_2;
-            },
-            function (physics_2) {
-                physics = physics_2;
-            },
-            function (game_2) {
-                game = game_2;
-            },
-            function (Ball_1_1) {
-                Ball_1 = Ball_1_1;
+            function (box2dweb_1_1) {
+                box2dweb_1 = box2dweb_1_1;
             }
         ],
         execute: function () {
-            fpsLabel = document.getElementById("fps-label");
-            width = 1000;
-            height = 500;
-            renderer = PIXI.autoDetectRenderer(width, height);
-            document.body.appendChild(renderer.view);
-            gameContainer = new game.Container();
-            gameContainer.pixiContainer = new PIXI.Container();
-            gameContainer.physicsContainer = new physics.Container(width, height);
-            gameContainer.add((function () {
-                var ball = new Ball_1.Ball(100);
-                ball.physicsObject.position.set([width / 2, height / 2]);
-                ball.physicsObject.density = 10;
-                return ball;
-            })());
-            for (var i = 0; i < 100; i++) {
-                gameContainer.add((function () {
-                    var ball = new Ball_1.Ball(1 + Math.random() * 4);
-                    ball.physicsObject.position.set([Math.random() * width, Math.random() * height]);
-                    ball.physicsObject.velocity.set([Math.random() * 1, Math.random() * 1]);
-                    return ball;
-                })());
+            b2Vec2 = box2dweb_1["default"].Common.Math.b2Vec2, b2AABB = box2dweb_1["default"].Collision.b2AABB, b2BodyDef = box2dweb_1["default"].Dynamics.b2BodyDef, b2Body = box2dweb_1["default"].Dynamics.b2Body, b2FixtureDef = box2dweb_1["default"].Dynamics.b2FixtureDef, b2Fixture = box2dweb_1["default"].Dynamics.b2Fixture, b2World = box2dweb_1["default"].Dynamics.b2World, b2MassData = box2dweb_1["default"].Collision.Shapes.b2MassData, b2PolygonShape = box2dweb_1["default"].Collision.Shapes.b2PolygonShape, b2CircleShape = box2dweb_1["default"].Collision.Shapes.b2CircleShape, b2DebugDraw = box2dweb_1["default"].Dynamics.b2DebugDraw, b2MouseJointDef = box2dweb_1["default"].Dynamics.Joints.b2MouseJointDef;
+            world = new b2World(new b2Vec2(0, 10) //gravity
+            , true //allow sleep
+            );
+            fixDef = new b2FixtureDef;
+            fixDef.density = 1.0;
+            fixDef.friction = 0.5;
+            fixDef.restitution = 0.2;
+            bodyDef = new b2BodyDef;
+            //create ground
+            bodyDef.type = b2Body.b2_staticBody;
+            fixDef.shape = new b2PolygonShape;
+            fixDef.shape.SetAsBox(20, 2);
+            bodyDef.position.Set(10, 400 / 30 + 1.8);
+            world.CreateBody(bodyDef).CreateFixture(fixDef);
+            bodyDef.position.Set(10, -1.8);
+            world.CreateBody(bodyDef).CreateFixture(fixDef);
+            fixDef.shape.SetAsBox(2, 14);
+            bodyDef.position.Set(-1.8, 13);
+            world.CreateBody(bodyDef).CreateFixture(fixDef);
+            bodyDef.position.Set(21.8, 13);
+            world.CreateBody(bodyDef).CreateFixture(fixDef);
+            //create some objects
+            bodyDef.type = b2Body.b2_dynamicBody;
+            for (i = 0; i < 10; ++i) {
+                if (Math.random() > 0.5) {
+                    fixDef.shape = new b2PolygonShape;
+                    fixDef.shape.SetAsBox(Math.random() + 0.1 //half width
+                    , Math.random() + 0.1 //half height
+                    );
+                }
+                else {
+                    fixDef.shape = new b2CircleShape(Math.random() + 0.1 //radius
+                    );
+                }
+                bodyDef.position.x = Math.random() * 10;
+                bodyDef.position.y = Math.random() * 10;
+                world.CreateBody(bodyDef).CreateFixture(fixDef);
             }
-            updater = setInterval(update, 20);
-            requestAnimationFrame(render);
+            //setup debug draw
+            debugDraw = new b2DebugDraw();
+            debugDraw.SetSprite(document.getElementById("canvas").getContext("2d"));
+            debugDraw.SetDrawScale(30.0);
+            debugDraw.SetFillAlpha(0.5);
+            debugDraw.SetLineThickness(1.0);
+            debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+            world.SetDebugDraw(debugDraw);
+            window.setInterval(update, 1000 / 60);
+            canvasPosition = getElementPosition(document.getElementById("canvas"));
+            document.addEventListener("mousedown", handleMouseDown, true);
+            document.addEventListener("touchstart", handleMouseDown, true);
+            document.addEventListener("mouseup", handleMouseUp, true);
+            document.addEventListener("touchend", handleMouseUp, true);
+            ;
+            ;
         }
     };
 });

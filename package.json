@@ -5,9 +5,10 @@
     "start": "http-server . -p 45823 -o http://127.0.0.1:45823/public/ -c-1"
   },
   "devDependencies": {
-    "http-server": "^0.10.0",
+    "@types/box2d": "0.0.32",
     "@types/gl-matrix": "^2.3.2",
-    "@types/pixi.js": "^4.5.7"
+    "@types/pixi.js": "^4.5.7",
+    "http-server": "^0.10.0"
   },
   "dependencies": {}
 }

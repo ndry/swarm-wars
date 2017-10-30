@@ -2,6 +2,7 @@
     "compilerOptions": {
         "outFile": "./public/app.js",
         "module": "system",
+        "moduleResolution": "node",
         
         "sourceMap": true,
         "watch": true,
