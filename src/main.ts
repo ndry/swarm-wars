@@ -1,18 +1,18 @@
 import Box2D from "box2dweb";
 
-var   b2Vec2 = Box2D.Common.Math.b2Vec2
-    ,  b2AABB = Box2D.Collision.b2AABB
-    ,	b2BodyDef = Box2D.Dynamics.b2BodyDef
-    ,	b2Body = Box2D.Dynamics.b2Body
-    ,	b2FixtureDef = Box2D.Dynamics.b2FixtureDef
-    ,	b2Fixture = Box2D.Dynamics.b2Fixture
-    ,	b2World = Box2D.Dynamics.b2World
-    ,	b2MassData = Box2D.Collision.Shapes.b2MassData
-    ,	b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
-    ,	b2CircleShape = Box2D.Collision.Shapes.b2CircleShape
-    ,	b2DebugDraw = Box2D.Dynamics.b2DebugDraw
-    ,  b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef
-    ;
+import b2Vec2 = Box2D.Common.Math.b2Vec2;
+import b2AABB = Box2D.Collision.b2AABB;
+import b2BodyDef = Box2D.Dynamics.b2BodyDef;
+import b2Body = Box2D.Dynamics.b2Body;
+import b2FixtureDef = Box2D.Dynamics.b2FixtureDef;
+import b2Fixture = Box2D.Dynamics.b2Fixture;
+import b2World = Box2D.Dynamics.b2World;
+import b2MassData = Box2D.Collision.Shapes.b2MassData;
+import b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape;
+import b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
+import b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
+import b2MouseJoint =  Box2D.Dynamics.Joints.b2MouseJoint;
+import b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef;
 
 var world = new b2World(
         new b2Vec2(0, 10)    //gravity
@@ -29,12 +29,12 @@ var bodyDef = new b2BodyDef;
 //create ground
 bodyDef.type = b2Body.b2_staticBody;
 fixDef.shape = new b2PolygonShape;
-fixDef.shape.SetAsBox(20, 2);
+(fixDef.shape as b2PolygonShape).SetAsBox(20, 2);
 bodyDef.position.Set(10, 400 / 30 + 1.8);
 world.CreateBody(bodyDef).CreateFixture(fixDef);
 bodyDef.position.Set(10, -1.8);
 world.CreateBody(bodyDef).CreateFixture(fixDef);
-fixDef.shape.SetAsBox(2, 14);
+(fixDef.shape as b2PolygonShape).SetAsBox(2, 14);
 bodyDef.position.Set(-1.8, 13);
 world.CreateBody(bodyDef).CreateFixture(fixDef);
 bodyDef.position.Set(21.8, 13);
@@ -46,7 +46,7 @@ bodyDef.type = b2Body.b2_dynamicBody;
 for(var i = 0; i < 10; ++i) {
     if(Math.random() > 0.5) {
         fixDef.shape = new b2PolygonShape;
-        fixDef.shape.SetAsBox(
+        (fixDef.shape as b2PolygonShape).SetAsBox(
             Math.random() + 0.1 //half width
             ,  Math.random() + 0.1 //half height
         );
@@ -62,7 +62,7 @@ for(var i = 0; i < 10; ++i) {
 
 //setup debug draw
 var debugDraw = new b2DebugDraw();
-    debugDraw.SetSprite(document.getElementById("canvas").getContext("2d"));
+    debugDraw.SetSprite((document.getElementById("canvas") as HTMLCanvasElement).getContext("2d"));
     debugDraw.SetDrawScale(30.0);
     debugDraw.SetFillAlpha(0.5);
     debugDraw.SetLineThickness(1.0);
@@ -73,10 +73,10 @@ window.setInterval(update, 1000 / 60);
 
 //mouse
 
-var mouseX, mouseY, mousePVec, isMouseDown, selectedBody, mouseJoint;
+var mouseX: number, mouseY: number, mousePVec: b2Vec2, isMouseDown: boolean, selectedBody, mouseJoint: b2MouseJoint;
 var canvasPosition = getElementPosition(document.getElementById("canvas"));
 
-function handleMouseDown(e) {
+function handleMouseDown(e: MouseEvent) {
     isMouseDown = true;
     handleMouseMove(e);
     document.addEventListener("mousemove", handleMouseMove, true);
@@ -97,14 +97,14 @@ function handleMouseUp() {
 document.addEventListener("mouseup", handleMouseUp, true);
 document.addEventListener("touchend", handleMouseUp, true);
 
-function handleMouseMove(e) {
+function handleMouseMove(e: MouseEvent | TouchEvent) {
     var clientX, clientY;
-    if(e.clientX)
+    if(e instanceof MouseEvent)
     {
         clientX = e.clientX;
         clientY = e.clientY;
     }
-    else if(e.changedTouches && e.changedTouches.length > 0)
+    else if (e && e.changedTouches && e.changedTouches.length > 0)
     {
         var touch = e.changedTouches[e.changedTouches.length - 1];
         clientX = touch.clientX;
@@ -119,7 +119,7 @@ function handleMouseMove(e) {
     e.preventDefault();
 };
 
-function getBodyAtMouse() {
+function getBodyAtMouse(): b2Body {
     mousePVec = new b2Vec2(mouseX, mouseY);
     var aabb = new b2AABB();
     aabb.lowerBound.Set(mouseX - 0.001, mouseY - 0.001);
@@ -132,7 +132,7 @@ function getBodyAtMouse() {
     return selectedBody;
 }
 
-function getBodyCB(fixture) {
+function getBodyCB(fixture: b2Fixture) {
     if(fixture.GetBody().GetType() != b2Body.b2_staticBody) {
         if(fixture.GetShape().TestPoint(fixture.GetBody().GetTransform(), mousePVec)) {
             selectedBody = fixture.GetBody();
@@ -152,10 +152,11 @@ function update() {
             var md = new b2MouseJointDef();
             md.bodyA = world.GetGroundBody();
             md.bodyB = body;
+            // @ts-ignore Property is lacking is .d.ts only
             md.target.Set(mouseX, mouseY);
             md.collideConnected = true;
             md.maxForce = 300.0 * body.GetMass();
-            mouseJoint = world.CreateJoint(md);
+            mouseJoint = world.CreateJoint(md) as b2MouseJoint;
             body.SetAwake(true);
         }
     }
@@ -177,20 +178,20 @@ function update() {
 //helpers
 
 //http://js-tut.aardon.de/js-tut/tutorial/position.html
-function getElementPosition(element) {
+function getElementPosition(element: HTMLElement) {
     var elem=element, tagname="", x=0, y=0;
     
-    while((typeof(elem) == "object") && (typeof(elem.tagName) != "undefined")) {
+    while (elem && (typeof(elem.tagName) != "undefined")) {
         y += elem.offsetTop;
         x += elem.offsetLeft;
         tagname = elem.tagName.toUpperCase();
 
         if(tagname == "BODY")
-            elem=0;
+            elem = null;
 
-        if(typeof(elem) == "object") {
+        if (elem) {
             if(typeof(elem.offsetParent) == "object")
-            elem = elem.offsetParent;
+            elem = elem.offsetParent as HTMLElement;
         }
     }
 

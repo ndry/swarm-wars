@@ -230,11 +230,11 @@ System.register("main", ["box2dweb"], function (exports_4, context_4) {
     }
     function handleMouseMove(e) {
         var clientX, clientY;
-        if (e.clientX) {
+        if (e instanceof MouseEvent) {
             clientX = e.clientX;
             clientY = e.clientY;
         }
-        else if (e.changedTouches && e.changedTouches.length > 0) {
+        else if (e && e.changedTouches && e.changedTouches.length > 0) {
             var touch = e.changedTouches[e.changedTouches.length - 1];
             clientX = touch.clientX;
             clientY = touch.clientY;
@@ -273,6 +273,7 @@ System.register("main", ["box2dweb"], function (exports_4, context_4) {
                 var md = new b2MouseJointDef();
                 md.bodyA = world.GetGroundBody();
                 md.bodyB = body;
+                // @ts-ignore Property is lacking is .d.ts only
                 md.target.Set(mouseX, mouseY);
                 md.collideConnected = true;
                 md.maxForce = 300.0 * body.GetMass();
@@ -297,20 +298,20 @@ System.register("main", ["box2dweb"], function (exports_4, context_4) {
     //http://js-tut.aardon.de/js-tut/tutorial/position.html
     function getElementPosition(element) {
         var elem = element, tagname = "", x = 0, y = 0;
-        while ((typeof (elem) == "object") && (typeof (elem.tagName) != "undefined")) {
+        while (elem && (typeof (elem.tagName) != "undefined")) {
             y += elem.offsetTop;
             x += elem.offsetLeft;
             tagname = elem.tagName.toUpperCase();
             if (tagname == "BODY")
-                elem = 0;
-            if (typeof (elem) == "object") {
+                elem = null;
+            if (elem) {
                 if (typeof (elem.offsetParent) == "object")
                     elem = elem.offsetParent;
             }
         }
         return { x: x, y: y };
     }
-    var box2dweb_1, b2Vec2, b2AABB, b2BodyDef, b2Body, b2FixtureDef, b2Fixture, b2World, b2MassData, b2PolygonShape, b2CircleShape, b2DebugDraw, b2MouseJointDef, world, fixDef, bodyDef, i, debugDraw, mouseX, mouseY, mousePVec, isMouseDown, selectedBody, mouseJoint, canvasPosition;
+    var box2dweb_1, b2Vec2, b2AABB, b2BodyDef, b2Body, b2FixtureDef, b2World, b2PolygonShape, b2CircleShape, b2DebugDraw, b2MouseJointDef, world, fixDef, bodyDef, i, debugDraw, mouseX, mouseY, mousePVec, isMouseDown, selectedBody, mouseJoint, canvasPosition;
     return {
         setters: [
             function (box2dweb_1_1) {
@@ -318,7 +319,16 @@ System.register("main", ["box2dweb"], function (exports_4, context_4) {
             }
         ],
         execute: function () {
-            b2Vec2 = box2dweb_1["default"].Common.Math.b2Vec2, b2AABB = box2dweb_1["default"].Collision.b2AABB, b2BodyDef = box2dweb_1["default"].Dynamics.b2BodyDef, b2Body = box2dweb_1["default"].Dynamics.b2Body, b2FixtureDef = box2dweb_1["default"].Dynamics.b2FixtureDef, b2Fixture = box2dweb_1["default"].Dynamics.b2Fixture, b2World = box2dweb_1["default"].Dynamics.b2World, b2MassData = box2dweb_1["default"].Collision.Shapes.b2MassData, b2PolygonShape = box2dweb_1["default"].Collision.Shapes.b2PolygonShape, b2CircleShape = box2dweb_1["default"].Collision.Shapes.b2CircleShape, b2DebugDraw = box2dweb_1["default"].Dynamics.b2DebugDraw, b2MouseJointDef = box2dweb_1["default"].Dynamics.Joints.b2MouseJointDef;
+            b2Vec2 = box2dweb_1["default"].Common.Math.b2Vec2;
+            b2AABB = box2dweb_1["default"].Collision.b2AABB;
+            b2BodyDef = box2dweb_1["default"].Dynamics.b2BodyDef;
+            b2Body = box2dweb_1["default"].Dynamics.b2Body;
+            b2FixtureDef = box2dweb_1["default"].Dynamics.b2FixtureDef;
+            b2World = box2dweb_1["default"].Dynamics.b2World;
+            b2PolygonShape = box2dweb_1["default"].Collision.Shapes.b2PolygonShape;
+            b2CircleShape = box2dweb_1["default"].Collision.Shapes.b2CircleShape;
+            b2DebugDraw = box2dweb_1["default"].Dynamics.b2DebugDraw;
+            b2MouseJointDef = box2dweb_1["default"].Dynamics.Joints.b2MouseJointDef;
             world = new b2World(new b2Vec2(0, 10) //gravity
             , true //allow sleep
             );
