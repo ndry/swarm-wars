@@ -1,43 +1,43 @@
 import * as PIXI from "pixi.js";
-import * as physics from "./physics";
+import Box2D from "box2dweb";
+
+import b2Body = Box2D.Dynamics.b2Body;
+import b2World = Box2D.Dynamics.b2World;
 
 export interface IObject {
-    physicsObject: physics.Object;
-    pixiObject: PIXI.DisplayObject;
+    physicsObject: b2Body;
+    displayObject: PIXI.DisplayObject;
     update(dt: number): void;
     render(): void;
 }
 
 export class Object<PIXIObject extends PIXI.DisplayObject> implements IObject {
-    physicsObject: physics.Object;
-    pixiObject: PIXIObject;
+    physicsObject: b2Body;
+    displayObject: PIXIObject;
+
+    constructor(physicsObject: b2Body, displayObject: PIXIObject) {
+
+    }
 
     update(dt: number) {
 
     }
 
     render() {
-        this.pixiObject.x = this.physicsObject.position[0];
-        this.pixiObject.y = this.physicsObject.position[1];
+        this.displayObject.x = this.physicsObject.GetPosition().x;
+        this.displayObject.y = this.physicsObject.GetPosition().y;
     }
 }
 
 export class Container {
-    physicsContainer: physics.Container;
-    pixiContainer: PIXI.Container;
-
     objects: IObject[] = [];
 
     add(object: IObject) {
         this.objects.push(object);
-        this.physicsContainer.bodies.push(object.physicsObject);
-        this.pixiContainer.addChild(object.pixiObject);
     }
 
     remove(object: IObject) {
         this.objects.splice(this.objects.indexOf(object), 1);
-        this.physicsContainer.bodies.splice(this.physicsContainer.bodies.indexOf(object.physicsObject), 1);
-        this.pixiContainer.removeChild(object.pixiObject);
     }
 
     update(dt: number) {

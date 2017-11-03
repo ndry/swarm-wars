@@ -8,6 +8,7 @@
     "@types/box2d": "0.0.32",
     "@types/gl-matrix": "^2.3.2",
     "@types/pixi.js": "^4.5.7",
+    "@types/underscore": "^1.8.1",
     "http-server": "^0.10.0"
   },
   "dependencies": {}
