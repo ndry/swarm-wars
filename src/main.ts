@@ -52,11 +52,14 @@ const cnt = new game.Container();
 class Earth {
     static createSpriteTexture(radius: number) {
         const g = new PIXI.Graphics();
-        g.beginFill(0x334045);
-        g.lineStyle(1, 0xadd8e6);
-        g.drawCircle(0, 0, radius);
+        g.boundsPadding = 1;
+        g.beginFill(0xe6b4b4, .4);
+        g.lineStyle(.1 * 10, 0xe6b4b4, .8);
+        g.drawCircle(0, 0, radius * 10);
         g.endFill();
-        return g.generateCanvasTexture();
+        g.moveTo(0, 0);
+        g.lineTo(radius * 10, 0);
+        return renderer.generateTexture(g, .5, 100);
     };
 
     body: b2Body;
@@ -84,9 +87,8 @@ class Earth {
             return fixDef;
         })());
 
-        const scale = 1 / 1000;
-        this.sprite = new PIXI.Sprite(Earth.createSpriteTexture(1 / scale));
-        this.sprite.scale.set(1 * scale);
+        this.sprite = new PIXI.Sprite(Earth.createSpriteTexture(1));
+        this.sprite.scale.set(.1);
         this.sprite.anchor.set(.5, .5);
         stage.addChild(this.sprite);
     }
@@ -100,43 +102,77 @@ class Earth {
 
 const earth = new Earth();
 
+class Body {
+    static createSpriteTexture(radius: number) {
+        const g = new PIXI.Graphics();
+        g.boundsPadding = 1;
+        g.beginFill(0xe6b4b4, .4);
+        g.lineStyle(.1 * 10, 0xe6b4b4);
+        g.drawCircle(0, 0, radius * 10);
+        g.endFill();
+        g.moveTo(0, 0);
+        g.lineTo(radius * 10, 0);
+        return renderer.generateTexture(g, .5, 100);
+    };
+
+    body: b2Body;
+    fixture: b2Fixture;
+    sprite: PIXI.Sprite;
+
+    constructor() {
+        this.body = world.CreateBody((() => {
+            var bodyDef = new b2BodyDef;
+            bodyDef.type = b2Body.b2_dynamicBody;
+            const d = (Math.random() - .5) * 100;
+            const a = Math.random() * 2 * Math.PI;
+            bodyDef.position.Set(Math.cos(a), -Math.sin(a));
+            bodyDef.position.Multiply(d);
+            bodyDef.position.Add(earth.body.GetPosition());
+            bodyDef.angularVelocity = 20 * (Math.random() - 0.5);
+    
+            
+            bodyDef.linearVelocity.SetV(earth.body.GetPosition());
+            bodyDef.linearVelocity.Subtract(bodyDef.position);
+            bodyDef.linearVelocity.CrossFV(1);
+            const dstLen = bodyDef.linearVelocity.Normalize();
+            bodyDef.linearVelocity.Multiply(1 * Math.sqrt(gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
+    
+            // bodyDef.linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
+            return bodyDef;
+        })());
+        const r = Math.random() * .5 + .1;
+        this.fixture = this.body.CreateFixture((() => {
+            var fixDef = new b2FixtureDef;
+            fixDef.density = 0.005;
+            fixDef.friction = 1.0;
+            fixDef.restitution = .1;
+            fixDef.shape = new b2CircleShape(r);
+            return fixDef;
+        })());
+
+        this.sprite = new PIXI.Sprite(Body.createSpriteTexture(r));
+        this.sprite.scale.set(.1);
+        this.sprite.anchor.set(.5, .5);
+        stage.addChild(this.sprite);
+    }
+
+    render() {
+        this.sprite.x = this.body.GetPosition().x;
+        this.sprite.y = this.body.GetPosition().y;
+        this.sprite.rotation = this.body.GetAngle();
+    }
+}
+
+const bodies: Body[] = [];
 for(var i = 0; i < 200; ++i) {
-    world.CreateBody((() => {
-        var bodyDef = new b2BodyDef;
-        bodyDef.type = b2Body.b2_dynamicBody;
-        const d = (Math.random() - .5) * 100;
-        const a = Math.random() * 2 * Math.PI;
-        bodyDef.position.Set(Math.cos(a), -Math.sin(a));
-        bodyDef.position.Multiply(d);
-        bodyDef.position.Add(earth.body.GetPosition());
-        bodyDef.angularVelocity = 20 * (Math.random() - 0.5);
-
-        
-        bodyDef.linearVelocity.SetV(earth.body.GetPosition());
-        bodyDef.linearVelocity.Subtract(bodyDef.position);
-        bodyDef.linearVelocity.CrossFV(1);
-        const dstLen = bodyDef.linearVelocity.Normalize();
-        bodyDef.linearVelocity.Multiply(1 * Math.sqrt(gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
-
-        // bodyDef.linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
-        return bodyDef;
-    })()).CreateFixture((() => {
-        var fixDef = new b2FixtureDef;
-        fixDef.density = 0.005;
-        fixDef.friction = 1.0;
-        fixDef.restitution = .1;
-        fixDef.shape = new b2CircleShape(
-            Math.random() * .5 + .1
-        );
-        return fixDef;
-    })());
+    bodies.push(new Body());
 }
 
 const debugCtx = canvasDebug.getContext("2d");
 const debugDraw = (() => {
     const debugDraw = new b2DebugDraw();
     debugDraw.SetSprite(debugCtx);
-    debugDraw.SetFillAlpha(0);
+    debugDraw.SetFillAlpha(0.4);
     debugDraw.SetLineThickness(.05);
     debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
     //debugDraw.SetDrawScale(1/10);
@@ -171,6 +207,9 @@ function update(timestamp: number) {
     // render
     {
         earth.render();
+        for (const body of bodies) {
+            body.render();
+        }
 
         const scale = 10;
 

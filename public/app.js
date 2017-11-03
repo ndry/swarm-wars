@@ -279,6 +279,10 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
         // render
         {
             earth.render();
+            for (var _i = 0, bodies_1 = bodies; _i < bodies_1.length; _i++) {
+                var body = bodies_1[_i];
+                body.render();
+            }
             var scale = 10;
             stage.position.set(canvas.width / 2, canvas.height / 2);
             stage.scale.set(scale, scale);
@@ -295,7 +299,7 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
             fpsLabel.innerText = "FPS " + (fpsTracker.fps && fpsTracker.fps.toFixed(2));
         }
     }
-    var box2dweb_3, b2Vec2, b2BodyDef, b2Body, b2FixtureDef, b2World, b2CircleShape, b2DebugDraw, PointerHandler_1, FpsTracker_1, Gravity_1, game, pixi_js_1, canvas, canvasDebug, renderer, stage, fpsLabel, world, gravity, cnt, Earth, earth, i, debugCtx, debugDraw, pointerHandler, fpsTracker;
+    var box2dweb_3, b2Vec2, b2BodyDef, b2Body, b2FixtureDef, b2World, b2CircleShape, b2DebugDraw, PointerHandler_1, FpsTracker_1, Gravity_1, game, pixi_js_1, canvas, canvasDebug, renderer, stage, fpsLabel, world, gravity, cnt, Earth, earth, Body, bodies, i, debugCtx, debugDraw, pointerHandler, fpsTracker;
     return {
         setters: [
             function (box2dweb_3_1) {
@@ -359,19 +363,21 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                         fixDef.shape = new b2CircleShape(1);
                         return fixDef;
                     })());
-                    var scale = 1 / 1000;
-                    this.sprite = new pixi_js_1["default"].Sprite(Earth.createSpriteTexture(1 / scale));
-                    this.sprite.scale.set(1 * scale);
+                    this.sprite = new pixi_js_1["default"].Sprite(Earth.createSpriteTexture(1));
+                    this.sprite.scale.set(.1);
                     this.sprite.anchor.set(.5, .5);
                     stage.addChild(this.sprite);
                 }
                 Earth.createSpriteTexture = function (radius) {
                     var g = new pixi_js_1["default"].Graphics();
-                    g.beginFill(0x334045);
-                    g.lineStyle(1, 0xadd8e6);
-                    g.drawCircle(0, 0, radius);
+                    g.boundsPadding = 1;
+                    g.beginFill(0xe6b4b4, .4);
+                    g.lineStyle(.1 * 10, 0xe6b4b4, .8);
+                    g.drawCircle(0, 0, radius * 10);
                     g.endFill();
-                    return g.generateCanvasTexture();
+                    g.moveTo(0, 0);
+                    g.lineTo(radius * 10, 0);
+                    return renderer.generateTexture(g, .5, 100);
                 };
                 ;
                 Earth.prototype.render = function () {
@@ -382,37 +388,67 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                 return Earth;
             }());
             earth = new Earth();
+            Body = (function () {
+                function Body() {
+                    this.body = world.CreateBody((function () {
+                        var bodyDef = new b2BodyDef;
+                        bodyDef.type = b2Body.b2_dynamicBody;
+                        var d = (Math.random() - .5) * 100;
+                        var a = Math.random() * 2 * Math.PI;
+                        bodyDef.position.Set(Math.cos(a), -Math.sin(a));
+                        bodyDef.position.Multiply(d);
+                        bodyDef.position.Add(earth.body.GetPosition());
+                        bodyDef.angularVelocity = 20 * (Math.random() - 0.5);
+                        bodyDef.linearVelocity.SetV(earth.body.GetPosition());
+                        bodyDef.linearVelocity.Subtract(bodyDef.position);
+                        bodyDef.linearVelocity.CrossFV(1);
+                        var dstLen = bodyDef.linearVelocity.Normalize();
+                        bodyDef.linearVelocity.Multiply(1 * Math.sqrt(gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
+                        // bodyDef.linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
+                        return bodyDef;
+                    })());
+                    var r = Math.random() * .5 + .1;
+                    this.fixture = this.body.CreateFixture((function () {
+                        var fixDef = new b2FixtureDef;
+                        fixDef.density = 0.005;
+                        fixDef.friction = 1.0;
+                        fixDef.restitution = .1;
+                        fixDef.shape = new b2CircleShape(r);
+                        return fixDef;
+                    })());
+                    this.sprite = new pixi_js_1["default"].Sprite(Body.createSpriteTexture(r));
+                    this.sprite.scale.set(.1);
+                    this.sprite.anchor.set(.5, .5);
+                    stage.addChild(this.sprite);
+                }
+                Body.createSpriteTexture = function (radius) {
+                    var g = new pixi_js_1["default"].Graphics();
+                    g.boundsPadding = 1;
+                    g.beginFill(0xe6b4b4, .4);
+                    g.lineStyle(.1 * 10, 0xe6b4b4);
+                    g.drawCircle(0, 0, radius * 10);
+                    g.endFill();
+                    g.moveTo(0, 0);
+                    g.lineTo(radius * 10, 0);
+                    return renderer.generateTexture(g, .5, 100);
+                };
+                ;
+                Body.prototype.render = function () {
+                    this.sprite.x = this.body.GetPosition().x;
+                    this.sprite.y = this.body.GetPosition().y;
+                    this.sprite.rotation = this.body.GetAngle();
+                };
+                return Body;
+            }());
+            bodies = [];
             for (i = 0; i < 200; ++i) {
-                world.CreateBody((function () {
-                    var bodyDef = new b2BodyDef;
-                    bodyDef.type = b2Body.b2_dynamicBody;
-                    var d = (Math.random() - .5) * 100;
-                    var a = Math.random() * 2 * Math.PI;
-                    bodyDef.position.Set(Math.cos(a), -Math.sin(a));
-                    bodyDef.position.Multiply(d);
-                    bodyDef.position.Add(earth.body.GetPosition());
-                    bodyDef.angularVelocity = 20 * (Math.random() - 0.5);
-                    bodyDef.linearVelocity.SetV(earth.body.GetPosition());
-                    bodyDef.linearVelocity.Subtract(bodyDef.position);
-                    bodyDef.linearVelocity.CrossFV(1);
-                    var dstLen = bodyDef.linearVelocity.Normalize();
-                    bodyDef.linearVelocity.Multiply(1 * Math.sqrt(gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
-                    // bodyDef.linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
-                    return bodyDef;
-                })()).CreateFixture((function () {
-                    var fixDef = new b2FixtureDef;
-                    fixDef.density = 0.005;
-                    fixDef.friction = 1.0;
-                    fixDef.restitution = .1;
-                    fixDef.shape = new b2CircleShape(Math.random() * .5 + .1);
-                    return fixDef;
-                })());
+                bodies.push(new Body());
             }
             debugCtx = canvasDebug.getContext("2d");
             debugDraw = (function () {
                 var debugDraw = new b2DebugDraw();
                 debugDraw.SetSprite(debugCtx);
-                debugDraw.SetFillAlpha(0);
+                debugDraw.SetFillAlpha(0.4);
                 debugDraw.SetLineThickness(.05);
                 debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
                 //debugDraw.SetDrawScale(1/10);
