@@ -78,8 +78,8 @@ System.register("Ball", ["pixi.js", "./physics", "game"], function (exports_2, c
                     _this.physicsObject.density = 1;
                     _this.physicsObject.elasticity = 1;
                     _this.physicsObject.radius = radius;
-                    _this.pixiObject = new PIXI.Sprite(Ball.spriteTexture(radius));
-                    _this.pixiObject.anchor.set(.5, .5);
+                    _this.displayObject = new PIXI.Sprite(Ball.spriteTexture(radius));
+                    _this.displayObject.anchor.set(.5, .5);
                     return _this;
                 }
                 Ball.spriteTexture = function (radius) {
@@ -263,7 +263,7 @@ System.register("PointerHandler", ["underscore", "box2dweb"], function (exports_
         }
     };
 });
-System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", "game"], function (exports_6, context_6) {
+System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", "game", "pixi.js"], function (exports_6, context_6) {
     var __moduleName = context_6 && context_6.id;
     function update(timestamp) {
         requestAnimationFrame(update);
@@ -278,20 +278,24 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
         }
         // render
         {
-            debugCtx.save();
-            // const scale = 10 / 6.957e9;
+            earth.render();
             var scale = 10;
+            stage.position.set(canvas.width / 2, canvas.height / 2);
+            stage.scale.set(scale, scale);
+            stage.pivot.set(earth.sprite.position.x, earth.sprite.position.y);
+            renderer.render(stage);
+            debugCtx.save();
             debugCtx.clearRect(0, 0, debugCtx.canvas.width, debugCtx.canvas.height);
             debugCtx.translate(debugCtx.canvas.width / 2, debugCtx.canvas.height / 2);
             // debugCtx.rotate(- earth.GetAngle());
             debugCtx.scale(scale, scale);
-            debugCtx.translate(-earth.GetPosition().x, -earth.GetPosition().y);
+            debugCtx.translate(-earth.body.GetPosition().x, -earth.body.GetPosition().y);
             world.DrawDebugData();
             debugCtx.restore();
             fpsLabel.innerText = "FPS " + (fpsTracker.fps && fpsTracker.fps.toFixed(2));
         }
     }
-    var box2dweb_3, b2Vec2, b2BodyDef, b2Body, b2FixtureDef, b2World, b2CircleShape, b2DebugDraw, PointerHandler_1, FpsTracker_1, Gravity_1, game, fpsLabel, world, gravity, cnt, earth, i, i, debugCtx, debugDraw, pointerHandler, fpsTracker;
+    var box2dweb_3, b2Vec2, b2BodyDef, b2Body, b2FixtureDef, b2World, b2CircleShape, b2DebugDraw, PointerHandler_1, FpsTracker_1, Gravity_1, game, pixi_js_1, canvas, canvasDebug, renderer, stage, fpsLabel, world, gravity, cnt, Earth, earth, i, debugCtx, debugDraw, pointerHandler, fpsTracker;
     return {
         setters: [
             function (box2dweb_3_1) {
@@ -308,6 +312,9 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
             },
             function (game_2) {
                 game = game_2;
+            },
+            function (pixi_js_1_1) {
+                pixi_js_1 = pixi_js_1_1;
             }
         ],
         execute: function () {
@@ -318,30 +325,63 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
             b2World = box2dweb_3["default"].Dynamics.b2World;
             b2CircleShape = box2dweb_3["default"].Collision.Shapes.b2CircleShape;
             b2DebugDraw = box2dweb_3["default"].Dynamics.b2DebugDraw;
+            canvas = document.getElementById("canvas");
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+            canvasDebug = document.getElementById("canvas-debug");
+            canvasDebug.width = canvasDebug.clientWidth;
+            canvasDebug.height = canvasDebug.clientHeight;
+            renderer = pixi_js_1["default"].autoDetectRenderer(canvas.clientWidth, canvas.clientHeight, {
+                view: canvas,
+                antialias: true
+            });
+            stage = new pixi_js_1["default"].Container();
             fpsLabel = document.getElementById("fps-label");
             world = new b2World(new b2Vec2(0, 0), true);
             gravity = new Gravity_1.Gravity(world);
             cnt = new game.Container();
-            for (i = 0; i < 1; ++i) {
-                var body = world.CreateBody((function () {
-                    var bodyDef = new b2BodyDef;
-                    bodyDef.type = b2Body.b2_dynamicBody;
-                    bodyDef.position.x = Math.random() * 900 + 100;
-                    bodyDef.position.y = Math.random() * 450 + 50;
-                    bodyDef.angularVelocity = 2 * (Math.random() - 0.5);
-                    // bodyDef.linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
-                    return bodyDef;
-                })());
-                body.CreateFixture((function () {
-                    var fixDef = new b2FixtureDef;
-                    fixDef.density = 10.0;
-                    fixDef.friction = 1.0;
-                    fixDef.restitution = .1;
-                    fixDef.shape = new b2CircleShape(1);
-                    return fixDef;
-                })());
-                earth = body;
-            }
+            Earth = (function () {
+                function Earth() {
+                    this.body = world.CreateBody((function () {
+                        var bodyDef = new b2BodyDef;
+                        bodyDef.type = b2Body.b2_dynamicBody;
+                        bodyDef.position.x = 0;
+                        bodyDef.position.y = 0;
+                        bodyDef.angularVelocity = 2 * (Math.random() - 0.5);
+                        // bodyDef.linearVelocity.Set(10 * (Math.random() - 0.5), 10 * (Math.random() - 0.5));
+                        return bodyDef;
+                    })());
+                    this.fixture = this.body.CreateFixture((function () {
+                        var fixDef = new b2FixtureDef;
+                        fixDef.density = 10.0;
+                        fixDef.friction = 1.0;
+                        fixDef.restitution = .1;
+                        fixDef.shape = new b2CircleShape(1);
+                        return fixDef;
+                    })());
+                    var scale = 1 / 1000;
+                    this.sprite = new pixi_js_1["default"].Sprite(Earth.createSpriteTexture(1 / scale));
+                    this.sprite.scale.set(1 * scale);
+                    this.sprite.anchor.set(.5, .5);
+                    stage.addChild(this.sprite);
+                }
+                Earth.createSpriteTexture = function (radius) {
+                    var g = new pixi_js_1["default"].Graphics();
+                    g.beginFill(0x334045);
+                    g.lineStyle(1, 0xadd8e6);
+                    g.drawCircle(0, 0, radius);
+                    g.endFill();
+                    return g.generateCanvasTexture();
+                };
+                ;
+                Earth.prototype.render = function () {
+                    this.sprite.x = this.body.GetPosition().x;
+                    this.sprite.y = this.body.GetPosition().y;
+                    this.sprite.rotation = this.body.GetAngle();
+                };
+                return Earth;
+            }());
+            earth = new Earth();
             for (i = 0; i < 200; ++i) {
                 world.CreateBody((function () {
                     var bodyDef = new b2BodyDef;
@@ -350,13 +390,13 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                     var a = Math.random() * 2 * Math.PI;
                     bodyDef.position.Set(Math.cos(a), -Math.sin(a));
                     bodyDef.position.Multiply(d);
-                    bodyDef.position.Add(earth.GetPosition());
+                    bodyDef.position.Add(earth.body.GetPosition());
                     bodyDef.angularVelocity = 20 * (Math.random() - 0.5);
-                    bodyDef.linearVelocity.SetV(earth.GetPosition());
+                    bodyDef.linearVelocity.SetV(earth.body.GetPosition());
                     bodyDef.linearVelocity.Subtract(bodyDef.position);
                     bodyDef.linearVelocity.CrossFV(1);
                     var dstLen = bodyDef.linearVelocity.Normalize();
-                    bodyDef.linearVelocity.Multiply(1 * Math.sqrt(gravity.gravitationalConstant * earth.GetMass() / dstLen));
+                    bodyDef.linearVelocity.Multiply(1 * Math.sqrt(gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
                     // bodyDef.linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
                     return bodyDef;
                 })()).CreateFixture((function () {
@@ -368,32 +408,12 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                     return fixDef;
                 })());
             }
-            // for(var i = 0; i < 2; ++i) {
-            //     world.CreateBody((() => {
-            //         var bodyDef = new b2BodyDef;
-            //         bodyDef.type = b2Body.b2_dynamicBody;
-            //         bodyDef.position.x = Math.random() * 900 + 100;
-            //         bodyDef.position.y = Math.random() * 450 + 50;
-            //         bodyDef.angularVelocity = 2 * (Math.random() - 0.5);
-            //         bodyDef.linearVelocity.Set(15 * (Math.random() - 0.5), 15 * (Math.random() - 0.5));
-            //         return bodyDef;
-            //     })()).CreateFixture((() => {
-            //         var fixDef = new b2FixtureDef;
-            //         fixDef.density = 5.0;
-            //         fixDef.friction = 1.0;
-            //         fixDef.restitution = .9;
-            //         fixDef.shape = new b2CircleShape(
-            //             Math.random() * 10 + 10
-            //         );
-            //         return fixDef;
-            //     })());
-            // }
-            debugCtx = document.getElementById("canvas").getContext("2d");
+            debugCtx = canvasDebug.getContext("2d");
             debugDraw = (function () {
                 var debugDraw = new b2DebugDraw();
                 debugDraw.SetSprite(debugCtx);
-                debugDraw.SetFillAlpha(0.5);
-                debugDraw.SetLineThickness(.1);
+                debugDraw.SetFillAlpha(0);
+                debugDraw.SetLineThickness(.05);
                 debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
                 //debugDraw.SetDrawScale(1/10);
                 return debugDraw;

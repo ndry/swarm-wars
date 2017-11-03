@@ -20,8 +20,8 @@ export class Ball extends game.Object<PIXI.Sprite> {
         this.physicsObject.elasticity = 1;
         this.physicsObject.radius = radius;
 
-        this.pixiObject = new PIXI.Sprite(Ball.spriteTexture(radius));
-        this.pixiObject.anchor.set(.5, .5);
+        this.displayObject = new PIXI.Sprite(Ball.spriteTexture(radius));
+        this.displayObject.anchor.set(.5, .5);
     }
 
     render() {

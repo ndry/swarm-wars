@@ -15,10 +15,34 @@
             .then(null, console.error.bind(console));
     };
 </script>
+<style>
+    .display {
+        position: absolute; 
+        top: 0; 
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+    #canvas {
+        background-color:#333333;
+        z-index: -50;
+    }
+    #canvas-debug {
+        background-color:rgba(0, 0, 0, 0);
+        z-index: -40;
+    }
+    #gui {
+        /* background-color: rgba(255, 255, 255, 0.171); */
+        color: white;
+    }
+</style>
 
 </head>
 <body>
-    <canvas id="canvas" width="1100" height="550" style="background-color:#333333;" ></canvas>
-    <div id="fps-label"></div>
+    <canvas id="canvas" class="display"></canvas>
+    <canvas id="canvas-debug" class="display"></canvas>
+    <div id="gui">
+        <div id="fps-label"></div>
+    </div>
 </body>
 </html>
