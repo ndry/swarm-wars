@@ -65,6 +65,8 @@ export class Earth {
         this.sprite.interactive = true;
         this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
         this.sprite.on("click", () => env.camera.target = this.sprite);
+        this.sprite.on("mouseover", () => this.sprite.tint = 0x0000ff);
+        this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
         env.stage.addChild(this.sprite);
 
         this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));

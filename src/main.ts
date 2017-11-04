@@ -33,7 +33,10 @@ class Enviornment {
     });
     stage = new PIXI.Container();
     fpsLabel = document.getElementById("fps-label");
-
+    pauseButton = document.getElementById("pause-button") as HTMLButtonElement;
+    trackRotationButton = document.getElementById("track-rotation-button") as HTMLButtonElement;
+    
+    
 
     world = new b2World(new b2Vec2(0, 0), true);
     gravity = new Gravity(this.world);
@@ -44,10 +47,18 @@ class Enviornment {
 
 
     camera = new Camera(this);
+
+    isPaused = false;
 }
 
 const env = new Enviornment();
 
+env.pauseButton.addEventListener("click", () => env.isPaused = !env.isPaused);
+env.trackRotationButton.addEventListener("click", () => env.camera.trackRotation = !env.camera.trackRotation);
+
+window.addEventListener("wheel", e => {
+    env.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
+});
 
 function adjustDisplay() {
     env.canvas.width = env.canvas.clientWidth;
@@ -122,6 +133,7 @@ Rx.Observable.interval(0, Rx.Scheduler.animationFrame)
 .timestamp()
 .subscribe(timestamped => {
     // update
+    if (!env.isPaused) 
     {
         fpsTracker.update(timestamped.timestamp);
         pointerHandler.update();

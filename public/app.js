@@ -77,6 +77,8 @@ System.register("Body", ["pixi.js", "box2dweb"], function (exports_2, context_2)
                     this.sprite.interactive = true;
                     this.sprite.hitArea = new PIXI.Circle(0, 0, args.radius * this.env.pixelsPerMeter);
                     this.sprite.on("click", function () { return env.camera.target = _this.sprite; });
+                    this.sprite.on("mouseover", function () { return _this.sprite.tint = 0x0000ff; });
+                    this.sprite.on("mouseout", function () { return _this.sprite.tint = 0xffffff; });
                     env.stage.addChild(this.sprite);
                     this.updateSubscription = env.updateEvent.subscribe(function (dt) { return _this.update(dt); });
                     this.renderSubscription = env.renderEvent.subscribe(function () { return _this.render(); });
@@ -149,6 +151,8 @@ System.register("Earth", ["pixi.js", "box2dweb"], function (exports_3, context_3
                     this.sprite.interactive = true;
                     this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
                     this.sprite.on("click", function () { return env.camera.target = _this.sprite; });
+                    this.sprite.on("mouseover", function () { return _this.sprite.tint = 0x0000ff; });
+                    this.sprite.on("mouseout", function () { return _this.sprite.tint = 0xffffff; });
                     env.stage.addChild(this.sprite);
                     this.updateSubscription = env.updateEvent.subscribe(function (dt) { return _this.update(dt); });
                     this.renderSubscription = env.renderEvent.subscribe(function () { return _this.render(); });
@@ -400,15 +404,23 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                     });
                     this.stage = new pixi_js_1["default"].Container();
                     this.fpsLabel = document.getElementById("fps-label");
+                    this.pauseButton = document.getElementById("pause-button");
+                    this.trackRotationButton = document.getElementById("track-rotation-button");
                     this.world = new b2World(new b2Vec2(0, 0), true);
                     this.gravity = new Gravity_1.Gravity(this.world);
                     this.updateEvent = new Rx_1["default"].Subject();
                     this.renderEvent = new Rx_1["default"].Subject();
                     this.camera = new Camera_1.Camera(this);
+                    this.isPaused = false;
                 }
                 return Enviornment;
             }());
             env = new Enviornment();
+            env.pauseButton.addEventListener("click", function () { return env.isPaused = !env.isPaused; });
+            env.trackRotationButton.addEventListener("click", function () { return env.camera.trackRotation = !env.camera.trackRotation; });
+            window.addEventListener("wheel", function (e) {
+                env.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
+            });
             window.addEventListener("resize", adjustDisplay);
             adjustDisplay();
             earth = new Earth_1.Earth(env);
@@ -450,7 +462,7 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                 .timestamp()
                 .subscribe(function (timestamped) {
                 // update
-                {
+                if (!env.isPaused) {
                     fpsTracker.update(timestamped.timestamp);
                     pointerHandler.update();
                     env.world.ClearForces();
