@@ -20,12 +20,13 @@ import { PointerHandler } from "./PointerHandler";
 import { FpsTracker } from "./FpsTracker";
 import { Gravity } from "./Gravity";
 
-import * as game from "./game";
-
 import PIXI, { Container } from "pixi.js";
 
 import { Earth } from "./Earth";
 import { Body } from "./Body";
+
+import Rx from 'rxjs/Rx';
+
 
 class Enviornment {
     canvas = document.getElementById("canvas") as HTMLCanvasElement;
@@ -42,10 +43,12 @@ class Enviornment {
     gravity = new Gravity(this.world);
 
 
-    gameContainer = new game.Container();
+    updateEvent = new Rx.Subject<number>();
+    renderEvent = new Rx.Subject<number>();
 }
 
 const env = new Enviornment();
+
 
 function adjustDisplay() {
     env.canvas.width = env.canvas.clientWidth;
@@ -109,28 +112,25 @@ env.world.SetDebugDraw((() => {
 const pointerHandler = new PointerHandler(env.world);
 const fpsTracker = new FpsTracker();
 
-
-
-function update(timestamp: number) {
-    requestAnimationFrame(update);
-    
+Rx.Observable.interval(0, Rx.Scheduler.animationFrame)
+.timestamp()
+.subscribe(timestamped => {
     // update
     {
-        fpsTracker.update(timestamp);
+        fpsTracker.update(timestamped.timestamp);
         pointerHandler.update();
         
         env.world.ClearForces();
         env.gravity.update();
 
         env.world.Step(1 / 60, 10, 10);
-        
-        env.gameContainer.update(1 / 60);
 
+        env.updateEvent.next(1 / 60);
     }
-    
+
     // render
     {
-        env.gameContainer.render();
+        env.renderEvent.next(timestamped.timestamp);
 
         const scale = 10;
 
@@ -161,6 +161,4 @@ function update(timestamp: number) {
 
         env.fpsLabel.innerText = `FPS ${fpsTracker.fps && fpsTracker.fps.toFixed(2)}`;
     }
-};
-
-requestAnimationFrame(update);
+});

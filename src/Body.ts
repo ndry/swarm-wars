@@ -6,7 +6,7 @@ import b2FixtureDef = Box2D.Dynamics.b2FixtureDef;
 import b2Body = Box2D.Dynamics.b2Body;
 import b2Fixture = Box2D.Dynamics.b2Fixture;
 import b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
-import * as game from "./game";
+import Rx from 'rxjs/Rx';
 
 export class Body {
     static createSpriteTexture(renderer: PIXI.CanvasRenderer | PIXI.WebGLRenderer, radius: number) {
@@ -25,14 +25,16 @@ export class Body {
     body: b2Body;
     fixture: b2Fixture;
     sprite: PIXI.Sprite;
-    object: game.Object;
+    updateSubscription: Rx.Subscription;
+    renderSubscription: Rx.Subscription;
 
     constructor(
         private env: {
             world: b2World,
             stage: PIXI.Container,
-            gameContainer: game.Container,
-            renderer: PIXI.CanvasRenderer | PIXI.WebGLRenderer
+            renderer: PIXI.CanvasRenderer | PIXI.WebGLRenderer,
+            updateEvent: Rx.Observable<number>,
+            renderEvent: Rx.Observable<number>
         },
         args: {
             position: {
@@ -71,13 +73,14 @@ export class Body {
         this.sprite.anchor.set(.5, .5);
         env.stage.addChild(this.sprite);
         
-        this.object = {
-            update: (dt) => {},
-            render: () => this.render()
-        };
-        env.gameContainer.add(this.object);
+        this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
+        this.renderSubscription = env.renderEvent.subscribe(() => this.render());
     }
 
+    update(dt: number) {
+        
+    }
+        
     render() {
         this.sprite.x = this.body.GetPosition().x;
         this.sprite.y = this.body.GetPosition().y;
