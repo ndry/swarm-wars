@@ -7,7 +7,7 @@ System.register("Camera", [], function (exports_1, context_1) {
             Camera = (function () {
                 function Camera(env) {
                     this.env = env;
-                    this.scale = 10;
+                    this.scale = 1;
                     this.trackRotation = false;
                 }
                 Camera.prototype.render = function () {
@@ -23,9 +23,9 @@ System.register("Camera", [], function (exports_1, context_1) {
                     if (this.trackRotation && this.target) {
                         this.env.debugCtx.rotate(-this.target.rotation);
                     }
-                    this.env.debugCtx.scale(this.scale, this.scale);
+                    this.env.debugCtx.scale(this.scale * this.env.pixelsPerMeter, this.scale * this.env.pixelsPerMeter);
                     if (this.target) {
-                        this.env.debugCtx.translate(-this.target.position.x, -this.target.position.y);
+                        this.env.debugCtx.translate(-this.target.position.x / this.env.pixelsPerMeter, -this.target.position.y / this.env.pixelsPerMeter);
                     }
                 };
                 return Camera;
@@ -72,10 +72,10 @@ System.register("Body", ["pixi.js", "box2dweb"], function (exports_2, context_2)
                         fixDef.shape = new b2CircleShape(args.radius);
                         return fixDef;
                     })());
-                    this.sprite = new PIXI.Sprite(Body.createSpriteTexture(env.renderer, args.radius));
+                    this.sprite = new PIXI.Sprite(Body.createSpriteTexture(env.renderer, args.radius * this.env.pixelsPerMeter));
                     this.sprite.anchor.set(.5, .5);
                     this.sprite.interactive = true;
-                    this.sprite.hitArea = new PIXI.Circle(0, 0, args.radius);
+                    this.sprite.hitArea = new PIXI.Circle(0, 0, args.radius * this.env.pixelsPerMeter);
                     this.sprite.on("click", function () { return env.camera.target = _this.sprite; });
                     env.stage.addChild(this.sprite);
                     this.updateSubscription = env.updateEvent.subscribe(function (dt) { return _this.update(dt); });
@@ -85,19 +85,19 @@ System.register("Body", ["pixi.js", "box2dweb"], function (exports_2, context_2)
                     var g = new PIXI.Graphics();
                     g.boundsPadding = 1;
                     g.beginFill(0xe6b4b4, .4);
-                    g.lineStyle(.1, 0xe6b4b4);
+                    g.lineStyle(1, 0xe6b4b4);
                     g.drawCircle(0, 0, radius);
                     g.endFill();
                     g.moveTo(0, 0);
                     g.lineTo(radius, 0);
-                    return renderer.generateTexture(g, .05, 50);
+                    return renderer.generateTexture(g);
                 };
                 ;
                 Body.prototype.update = function (dt) {
                 };
                 Body.prototype.render = function () {
-                    this.sprite.x = this.body.GetPosition().x;
-                    this.sprite.y = this.body.GetPosition().y;
+                    this.sprite.x = this.body.GetPosition().x * this.env.pixelsPerMeter;
+                    this.sprite.y = this.body.GetPosition().y * this.env.pixelsPerMeter;
                     this.sprite.rotation = this.body.GetAngle();
                 };
                 return Body;
@@ -144,10 +144,10 @@ System.register("Earth", ["pixi.js", "box2dweb"], function (exports_3, context_3
                         fixDef.shape = new b2CircleShape(1);
                         return fixDef;
                     })());
-                    this.sprite = new PIXI.Sprite(Earth.createSpriteTexture(env.renderer, 1));
+                    this.sprite = new PIXI.Sprite(Earth.createSpriteTexture(env.renderer, 1 * this.env.pixelsPerMeter));
                     this.sprite.anchor.set(.5, .5);
                     this.sprite.interactive = true;
-                    this.sprite.hitArea = new PIXI.Circle(0, 0, 1);
+                    this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
                     this.sprite.on("click", function () { return env.camera.target = _this.sprite; });
                     env.stage.addChild(this.sprite);
                     this.updateSubscription = env.updateEvent.subscribe(function (dt) { return _this.update(dt); });
@@ -157,19 +157,19 @@ System.register("Earth", ["pixi.js", "box2dweb"], function (exports_3, context_3
                     var g = new PIXI.Graphics();
                     g.boundsPadding = 1;
                     g.beginFill(0xe6b4b4, .4);
-                    g.lineStyle(.1, 0xe6b4b4, .8);
+                    g.lineStyle(1, 0xe6b4b4, .8);
                     g.drawCircle(0, 0, radius);
                     g.endFill();
                     g.moveTo(0, 0);
                     g.lineTo(radius, 0);
-                    return renderer.generateTexture(g, .05, 50);
+                    return renderer.generateTexture(g);
                 };
                 ;
                 Earth.prototype.update = function (dt) {
                 };
                 Earth.prototype.render = function () {
-                    this.sprite.x = this.body.GetPosition().x;
-                    this.sprite.y = this.body.GetPosition().y;
+                    this.sprite.x = this.body.GetPosition().x * this.env.pixelsPerMeter;
+                    this.sprite.y = this.body.GetPosition().y * this.env.pixelsPerMeter;
                     this.sprite.rotation = this.body.GetAngle();
                 };
                 return Earth;
@@ -390,6 +390,7 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
             b2DebugDraw = box2dweb_5["default"].Dynamics.b2DebugDraw;
             Enviornment = (function () {
                 function Enviornment() {
+                    this.pixelsPerMeter = 30;
                     this.canvas = document.getElementById("canvas");
                     this.canvasDebug = document.getElementById("canvas-debug");
                     this.debugCtx = this.canvasDebug.getContext("2d");

@@ -14,12 +14,12 @@ export class Body {
         const g = new PIXI.Graphics();
         g.boundsPadding = 1;
         g.beginFill(0xe6b4b4, .4);
-        g.lineStyle(.1, 0xe6b4b4);
+        g.lineStyle(1, 0xe6b4b4);
         g.drawCircle(0, 0, radius);
         g.endFill();
         g.moveTo(0, 0);
         g.lineTo(radius, 0);
-        return renderer.generateTexture(g, .05, 50);
+        return renderer.generateTexture(g);
         
     };
 
@@ -31,6 +31,7 @@ export class Body {
 
     constructor(
         private env: {
+            pixelsPerMeter: number,
             world: b2World,
             stage: PIXI.Container,
             renderer: PIXI.CanvasRenderer | PIXI.WebGLRenderer,
@@ -70,10 +71,10 @@ export class Body {
             return fixDef;
         })());
 
-        this.sprite = new PIXI.Sprite(Body.createSpriteTexture(env.renderer, args.radius));
+        this.sprite = new PIXI.Sprite(Body.createSpriteTexture(env.renderer, args.radius * this.env.pixelsPerMeter));
         this.sprite.anchor.set(.5, .5);
         this.sprite.interactive = true;
-        this.sprite.hitArea = new PIXI.Circle(0, 0, args.radius);
+        this.sprite.hitArea = new PIXI.Circle(0, 0, args.radius * this.env.pixelsPerMeter);
         this.sprite.on("click", () => env.camera.target = this.sprite);
         env.stage.addChild(this.sprite);
         
@@ -86,8 +87,8 @@ export class Body {
     }
         
     render() {
-        this.sprite.x = this.body.GetPosition().x;
-        this.sprite.y = this.body.GetPosition().y;
+        this.sprite.x = this.body.GetPosition().x * this.env.pixelsPerMeter;
+        this.sprite.y = this.body.GetPosition().y * this.env.pixelsPerMeter;
         this.sprite.rotation = this.body.GetAngle();
     }
 }

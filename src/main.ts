@@ -21,6 +21,9 @@ import { Camera } from "./Camera";
 
 
 class Enviornment {
+    pixelsPerMeter = 30;
+
+
     canvas = document.getElementById("canvas") as HTMLCanvasElement;
     canvasDebug = document.getElementById("canvas-debug") as HTMLCanvasElement;
     debugCtx = this.canvasDebug.getContext("2d");

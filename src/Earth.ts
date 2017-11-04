@@ -15,12 +15,12 @@ export class Earth {
         const g = new PIXI.Graphics();
         g.boundsPadding = 1;
         g.beginFill(0xe6b4b4, .4);
-        g.lineStyle(.1, 0xe6b4b4, .8);
+        g.lineStyle(1, 0xe6b4b4, .8);
         g.drawCircle(0, 0, radius);
         g.endFill();
         g.moveTo(0, 0);
         g.lineTo(radius, 0);
-        return renderer.generateTexture(g, .05, 50);
+        return renderer.generateTexture(g);
     };
 
     body: b2Body;
@@ -31,7 +31,8 @@ export class Earth {
 
     constructor(
         private env: {
-            world: b2World,
+            pixelsPerMeter: number,
+             world: b2World,
             stage: PIXI.Container,
             renderer: PIXI.CanvasRenderer | PIXI.WebGLRenderer,
             updateEvent: Rx.Observable<number>,
@@ -59,10 +60,10 @@ export class Earth {
             return fixDef;
         })());
 
-        this.sprite = new PIXI.Sprite(Earth.createSpriteTexture(env.renderer, 1));
+        this.sprite = new PIXI.Sprite(Earth.createSpriteTexture(env.renderer, 1 * this.env.pixelsPerMeter));
         this.sprite.anchor.set(.5, .5);
         this.sprite.interactive = true;
-        this.sprite.hitArea = new PIXI.Circle(0, 0, 1);
+        this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
         this.sprite.on("click", () => env.camera.target = this.sprite);
         env.stage.addChild(this.sprite);
 
@@ -75,8 +76,8 @@ export class Earth {
     }
 
     render() {
-        this.sprite.x = this.body.GetPosition().x;
-        this.sprite.y = this.body.GetPosition().y;
+        this.sprite.x = this.body.GetPosition().x * this.env.pixelsPerMeter;
+        this.sprite.y = this.body.GetPosition().y * this.env.pixelsPerMeter;
         this.sprite.rotation = this.body.GetAngle();
     }
 }
