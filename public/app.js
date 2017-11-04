@@ -377,7 +377,7 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                     g.endFill();
                     g.moveTo(0, 0);
                     g.lineTo(radius * 10, 0);
-                    return renderer.generateTexture(g, .5, 100);
+                    return renderer.generateTexture(g, .5, 5);
                 };
                 ;
                 Earth.prototype.render = function () {
@@ -430,7 +430,7 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                     g.endFill();
                     g.moveTo(0, 0);
                     g.lineTo(radius * 10, 0);
-                    return renderer.generateTexture(g, .5, 100);
+                    return renderer.generateTexture(g, .5, 5);
                 };
                 ;
                 Body.prototype.render = function () {

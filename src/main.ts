@@ -59,7 +59,7 @@ class Earth {
         g.endFill();
         g.moveTo(0, 0);
         g.lineTo(radius * 10, 0);
-        return renderer.generateTexture(g, .5, 100);
+        return renderer.generateTexture(g, .5, 5);
     };
 
     body: b2Body;
@@ -112,7 +112,7 @@ class Body {
         g.endFill();
         g.moveTo(0, 0);
         g.lineTo(radius * 10, 0);
-        return renderer.generateTexture(g, .5, 100);
+        return renderer.generateTexture(g, .5, 5);
     };
 
     body: b2Body;
