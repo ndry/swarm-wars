@@ -18,6 +18,7 @@ import { Body } from "./Body";
 import Rx from 'rxjs/Rx';
 
 import { Camera } from "./Camera";
+import { timestamp } from "rxjs/operators";
 
 
 class Enviornment {
@@ -35,6 +36,7 @@ class Enviornment {
     fpsLabel = document.getElementById("fps-label");
     pauseButton = document.getElementById("pause-button") as HTMLButtonElement;
     trackRotationButton = document.getElementById("track-rotation-button") as HTMLButtonElement;
+    stepButton = document.getElementById("step-button") as HTMLButtonElement;
     
     
 
@@ -55,6 +57,7 @@ const env = new Enviornment();
 
 env.pauseButton.addEventListener("click", () => env.isPaused = !env.isPaused);
 env.trackRotationButton.addEventListener("click", () => env.camera.trackRotation = !env.camera.trackRotation);
+env.stepButton.addEventListener("click", () => update(1 / 60));
 
 window.addEventListener("wheel", e => {
     env.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
@@ -129,21 +132,24 @@ env.world.SetDebugDraw((() => {
 const pointerHandler = new PointerHandler(env.world);
 const fpsTracker = new FpsTracker();
 
+function update(dt: number) {
+    pointerHandler.update();
+    
+    env.world.ClearForces();
+    env.gravity.update();
+
+    env.world.Step(dt, 10, 10);
+
+    env.updateEvent.next(dt);
+}
+
 Rx.Observable.interval(0, Rx.Scheduler.animationFrame)
 .timestamp()
 .subscribe(timestamped => {
     // update
-    if (!env.isPaused) 
-    {
+    if (!env.isPaused) {
         fpsTracker.update(timestamped.timestamp);
-        pointerHandler.update();
-        
-        env.world.ClearForces();
-        env.gravity.update();
-
-        env.world.Step(1 / 60, 10, 10);
-
-        env.updateEvent.next(1 / 60);
+        update(1 / 60)
     }
 
     // render

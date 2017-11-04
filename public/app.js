@@ -357,6 +357,13 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
             env.debugCtx.setTransform(1, 0, 0, 1, env.canvasDebug.width / 2, env.canvasDebug.height / 2);
         }
     }
+    function update(dt) {
+        pointerHandler.update();
+        env.world.ClearForces();
+        env.gravity.update();
+        env.world.Step(dt, 10, 10);
+        env.updateEvent.next(dt);
+    }
     var box2dweb_5, b2Vec2, b2World, b2DebugDraw, PointerHandler_1, FpsTracker_1, Gravity_1, pixi_js_1, Earth_1, Body_1, Rx_1, Camera_1, Enviornment, env, earth, bodies, i, pointerHandler, fpsTracker;
     return {
         setters: [
@@ -406,6 +413,7 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                     this.fpsLabel = document.getElementById("fps-label");
                     this.pauseButton = document.getElementById("pause-button");
                     this.trackRotationButton = document.getElementById("track-rotation-button");
+                    this.stepButton = document.getElementById("step-button");
                     this.world = new b2World(new b2Vec2(0, 0), true);
                     this.gravity = new Gravity_1.Gravity(this.world);
                     this.updateEvent = new Rx_1["default"].Subject();
@@ -418,6 +426,7 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
             env = new Enviornment();
             env.pauseButton.addEventListener("click", function () { return env.isPaused = !env.isPaused; });
             env.trackRotationButton.addEventListener("click", function () { return env.camera.trackRotation = !env.camera.trackRotation; });
+            env.stepButton.addEventListener("click", function () { return update(1 / 60); });
             window.addEventListener("wheel", function (e) {
                 env.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
             });
@@ -464,11 +473,7 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                 // update
                 if (!env.isPaused) {
                     fpsTracker.update(timestamped.timestamp);
-                    pointerHandler.update();
-                    env.world.ClearForces();
-                    env.gravity.update();
-                    env.world.Step(1 / 60, 10, 10);
-                    env.updateEvent.next(1 / 60);
+                    update(1 / 60);
                 }
                 // render
                 {
