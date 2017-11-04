@@ -3,34 +3,27 @@ import _ from "underscore";
 import Box2D from "box2dweb";
 
 import b2Vec2 = Box2D.Common.Math.b2Vec2;
-import b2AABB = Box2D.Collision.b2AABB;
-import b2BodyDef = Box2D.Dynamics.b2BodyDef;
-import b2Body = Box2D.Dynamics.b2Body;
-import b2FixtureDef = Box2D.Dynamics.b2FixtureDef;
-import b2Fixture = Box2D.Dynamics.b2Fixture;
 import b2World = Box2D.Dynamics.b2World;
-import b2MassData = Box2D.Collision.Shapes.b2MassData;
-import b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape;
-import b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
 import b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
-import b2MouseJoint =  Box2D.Dynamics.Joints.b2MouseJoint;
-import b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef;
 
 import { PointerHandler } from "./PointerHandler";
 import { FpsTracker } from "./FpsTracker";
 import { Gravity } from "./Gravity";
 
-import PIXI, { Container } from "pixi.js";
+import PIXI from "pixi.js";
 
 import { Earth } from "./Earth";
 import { Body } from "./Body";
 
 import Rx from 'rxjs/Rx';
 
+import { Camera } from "./Camera";
+
 
 class Enviornment {
     canvas = document.getElementById("canvas") as HTMLCanvasElement;
     canvasDebug = document.getElementById("canvas-debug") as HTMLCanvasElement;
+    debugCtx = this.canvasDebug.getContext("2d");
     renderer = PIXI.autoDetectRenderer(this.canvas.clientWidth, this.canvas.clientHeight, {
         view: this.canvas,
         antialias: true
@@ -45,6 +38,9 @@ class Enviornment {
 
     updateEvent = new Rx.Subject<number>();
     renderEvent = new Rx.Subject<number>();
+
+
+    camera = new Camera(this);
 }
 
 const env = new Enviornment();
@@ -54,8 +50,16 @@ function adjustDisplay() {
     env.canvas.width = env.canvas.clientWidth;
     env.canvas.height = env.canvas.clientHeight;
 
-    env.canvasDebug.width = env.canvasDebug.clientWidth;
-    env.canvasDebug.height = env.canvasDebug.clientHeight;
+    env.stage.position.set(
+        env.canvas.width / 2, 
+        env.canvas.height / 2);
+
+    if (env.canvasDebug) {
+        env.canvasDebug.width = env.canvasDebug.clientWidth;
+        env.canvasDebug.height = env.canvasDebug.clientHeight;
+
+        env.debugCtx.setTransform(1, 0, 0, 1, env.canvasDebug.width / 2, env.canvasDebug.height / 2);
+    }
 }
 
 window.addEventListener("resize", adjustDisplay);
@@ -64,7 +68,7 @@ adjustDisplay();
 
 
 const earth = new Earth(env);
-
+env.camera.target = earth.sprite;
 
 const bodies: Body[] = [];
 for(var i = 0; i < 200; ++i) {
@@ -94,11 +98,10 @@ for(var i = 0; i < 200; ++i) {
 }
 
 
-const debugCtx = env.canvasDebug.getContext("2d");
 
 env.world.SetDebugDraw((() => {
     const debugDraw = new b2DebugDraw();
-    debugDraw.SetSprite(debugCtx);
+    debugDraw.SetSprite(env.debugCtx);
     debugDraw.SetFillAlpha(0.4);
     debugDraw.SetLineThickness(.05);
     debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
@@ -132,33 +135,21 @@ Rx.Observable.interval(0, Rx.Scheduler.animationFrame)
     {
         env.renderEvent.next(timestamped.timestamp);
 
-        const scale = 10;
-
-        env.stage.position.set(
-            env.canvas.width / 2, 
-            env.canvas.height / 2);
         
-        env.stage.scale.set(scale, scale);
-
-        env.stage.pivot.set(
-            earth.sprite.position.x, 
-            earth.sprite.position.y);
-
+        env.camera.render();
         env.renderer.render(env.stage);
-
-        debugCtx.save();
-        debugCtx.clearRect(0, 0, debugCtx.canvas.width, debugCtx.canvas.height);
-        debugCtx.translate(
-            debugCtx.canvas.width / 2, 
-            debugCtx.canvas.height / 2); 
-        // debugCtx.rotate(- earth.GetAngle());
-        debugCtx.scale(scale, scale);
-        debugCtx.translate(
-            - earth.body.GetPosition().x, 
-            - earth.body.GetPosition().y);
+        
+        if (env.canvasDebug) {
+            env.debugCtx.save();
+            env.debugCtx.setTransform(1, 0, 0, 1, 0, 0);
+            env.debugCtx.clearRect(0, 0, env.debugCtx.canvas.width, env.debugCtx.canvas.height);
+            env.debugCtx.restore();
+            env.debugCtx.save();
+            env.camera.renderDebug();
             env.world.DrawDebugData();
-        debugCtx.restore();
-
+            env.debugCtx.restore();
+        }
+        
         env.fpsLabel.innerText = `FPS ${fpsTracker.fps && fpsTracker.fps.toFixed(2)}`;
     }
 });

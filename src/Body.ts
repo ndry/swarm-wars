@@ -7,18 +7,19 @@ import b2Body = Box2D.Dynamics.b2Body;
 import b2Fixture = Box2D.Dynamics.b2Fixture;
 import b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
 import Rx from 'rxjs/Rx';
+import { Camera } from "./Camera";
 
 export class Body {
     static createSpriteTexture(renderer: PIXI.CanvasRenderer | PIXI.WebGLRenderer, radius: number) {
         const g = new PIXI.Graphics();
         g.boundsPadding = 1;
         g.beginFill(0xe6b4b4, .4);
-        g.lineStyle(.1 * 10, 0xe6b4b4);
-        g.drawCircle(0, 0, radius * 10);
+        g.lineStyle(.1, 0xe6b4b4);
+        g.drawCircle(0, 0, radius);
         g.endFill();
         g.moveTo(0, 0);
-        g.lineTo(radius * 10, 0);
-        return renderer.generateTexture(g, .5, 5);
+        g.lineTo(radius, 0);
+        return renderer.generateTexture(g, .05, 50);
         
     };
 
@@ -34,7 +35,8 @@ export class Body {
             stage: PIXI.Container,
             renderer: PIXI.CanvasRenderer | PIXI.WebGLRenderer,
             updateEvent: Rx.Observable<number>,
-            renderEvent: Rx.Observable<number>
+            renderEvent: Rx.Observable<number>,
+            camera: Camera
         },
         args: {
             position: {
@@ -69,8 +71,10 @@ export class Body {
         })());
 
         this.sprite = new PIXI.Sprite(Body.createSpriteTexture(env.renderer, args.radius));
-        this.sprite.scale.set(.1);
         this.sprite.anchor.set(.5, .5);
+        this.sprite.interactive = true;
+        this.sprite.hitArea = new PIXI.Circle(0, 0, args.radius);
+        this.sprite.on("click", () => env.camera.target = this.sprite);
         env.stage.addChild(this.sprite);
         
         this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
