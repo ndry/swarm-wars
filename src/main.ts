@@ -22,154 +22,78 @@ import { Gravity } from "./Gravity";
 
 import * as game from "./game";
 
-import PIXI from "pixi.js";
+import PIXI, { Container } from "pixi.js";
+
+import { Earth } from "./Earth";
+import { Body } from "./Body";
+
+class Enviornment {
+    canvas = document.getElementById("canvas") as HTMLCanvasElement;
+    canvasDebug = document.getElementById("canvas-debug") as HTMLCanvasElement;
+    renderer = PIXI.autoDetectRenderer(this.canvas.clientWidth, this.canvas.clientHeight, {
+        view: this.canvas,
+        antialias: true
+    });
+    stage = new PIXI.Container();
+    fpsLabel = document.getElementById("fps-label");
 
 
-
-const canvas = document.getElementById("canvas") as HTMLCanvasElement;
-canvas.width = canvas.clientWidth;
-canvas.height = canvas.clientHeight;
-
-const canvasDebug = document.getElementById("canvas-debug") as HTMLCanvasElement;
-canvasDebug.width = canvasDebug.clientWidth;
-canvasDebug.height = canvasDebug.clientHeight;
-
-const renderer = PIXI.autoDetectRenderer(canvas.clientWidth, canvas.clientHeight, {
-    view: canvas,
-    antialias: true
-});
-const stage = new PIXI.Container();
+    world = new b2World(new b2Vec2(0, 0), true);
+    gravity = new Gravity(this.world);
 
 
-
-const fpsLabel = document.getElementById("fps-label");
-
-const world = new b2World(new b2Vec2(0, 0), true);
-const gravity = new Gravity(world);
-
-const cnt = new game.Container();
-
-class Earth {
-    static createSpriteTexture(radius: number) {
-        const g = new PIXI.Graphics();
-        g.boundsPadding = 1;
-        g.beginFill(0xe6b4b4, .4);
-        g.lineStyle(.1 * 10, 0xe6b4b4, .8);
-        g.drawCircle(0, 0, radius * 10);
-        g.endFill();
-        g.moveTo(0, 0);
-        g.lineTo(radius * 10, 0);
-        return renderer.generateTexture(g, .5, 5);
-    };
-
-    body: b2Body;
-    fixture: b2Fixture;
-    sprite: PIXI.Sprite;
-
-    constructor() {
-        this.body = world.CreateBody((() => {
-            var bodyDef = new b2BodyDef;
-            bodyDef.type = b2Body.b2_dynamicBody;
-            bodyDef.position.x = 0;
-            bodyDef.position.y = 0;
-            bodyDef.angularVelocity = 2 * (Math.random() - 0.5);
-            // bodyDef.linearVelocity.Set(10 * (Math.random() - 0.5), 10 * (Math.random() - 0.5));
-            return bodyDef;
-        })());
-        this.fixture = this.body.CreateFixture((() => {
-            var fixDef = new b2FixtureDef;
-            fixDef.density = 10.0;
-            fixDef.friction = 1.0;
-            fixDef.restitution = .1;
-            fixDef.shape = new b2CircleShape(
-                1
-            );
-            return fixDef;
-        })());
-
-        this.sprite = new PIXI.Sprite(Earth.createSpriteTexture(1));
-        this.sprite.scale.set(.1);
-        this.sprite.anchor.set(.5, .5);
-        stage.addChild(this.sprite);
-    }
-
-    render() {
-        this.sprite.x = this.body.GetPosition().x;
-        this.sprite.y = this.body.GetPosition().y;
-        this.sprite.rotation = this.body.GetAngle();
-    }
+    gameContainer = new game.Container();
 }
 
-const earth = new Earth();
+const env = new Enviornment();
 
-class Body {
-    static createSpriteTexture(radius: number) {
-        const g = new PIXI.Graphics();
-        g.boundsPadding = 1;
-        g.beginFill(0xe6b4b4, .4);
-        g.lineStyle(.1 * 10, 0xe6b4b4);
-        g.drawCircle(0, 0, radius * 10);
-        g.endFill();
-        g.moveTo(0, 0);
-        g.lineTo(radius * 10, 0);
-        return renderer.generateTexture(g, .5, 5);
-    };
+function adjustDisplay() {
+    env.canvas.width = env.canvas.clientWidth;
+    env.canvas.height = env.canvas.clientHeight;
 
-    body: b2Body;
-    fixture: b2Fixture;
-    sprite: PIXI.Sprite;
-
-    constructor() {
-        this.body = world.CreateBody((() => {
-            var bodyDef = new b2BodyDef;
-            bodyDef.type = b2Body.b2_dynamicBody;
-            const d = (Math.random() - .5) * 100;
-            const a = Math.random() * 2 * Math.PI;
-            bodyDef.position.Set(Math.cos(a), -Math.sin(a));
-            bodyDef.position.Multiply(d);
-            bodyDef.position.Add(earth.body.GetPosition());
-            bodyDef.angularVelocity = 20 * (Math.random() - 0.5);
-    
-            
-            bodyDef.linearVelocity.SetV(earth.body.GetPosition());
-            bodyDef.linearVelocity.Subtract(bodyDef.position);
-            bodyDef.linearVelocity.CrossFV(1);
-            const dstLen = bodyDef.linearVelocity.Normalize();
-            bodyDef.linearVelocity.Multiply(1 * Math.sqrt(gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
-    
-            // bodyDef.linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
-            return bodyDef;
-        })());
-        const r = Math.random() * .5 + .1;
-        this.fixture = this.body.CreateFixture((() => {
-            var fixDef = new b2FixtureDef;
-            fixDef.density = 0.005;
-            fixDef.friction = 1.0;
-            fixDef.restitution = .1;
-            fixDef.shape = new b2CircleShape(r);
-            return fixDef;
-        })());
-
-        this.sprite = new PIXI.Sprite(Body.createSpriteTexture(r));
-        this.sprite.scale.set(.1);
-        this.sprite.anchor.set(.5, .5);
-        stage.addChild(this.sprite);
-    }
-
-    render() {
-        this.sprite.x = this.body.GetPosition().x;
-        this.sprite.y = this.body.GetPosition().y;
-        this.sprite.rotation = this.body.GetAngle();
-    }
+    env.canvasDebug.width = env.canvasDebug.clientWidth;
+    env.canvasDebug.height = env.canvasDebug.clientHeight;
 }
+
+window.addEventListener("resize", adjustDisplay);
+adjustDisplay();
+
+
+
+const earth = new Earth(env);
+
 
 const bodies: Body[] = [];
 for(var i = 0; i < 200; ++i) {
-    bodies.push(new Body());
+    const d = (Math.random() - .5) * 100;
+    const a = Math.random() * 2 * Math.PI;
+    const position = new b2Vec2(Math.cos(a), -Math.sin(a));
+    position.Multiply(d);
+    position.Add(earth.body.GetPosition());
+    
+    
+    const linearVelocity = earth.body.GetPosition().Copy();
+    linearVelocity.SetV(earth.body.GetPosition());
+    linearVelocity.Subtract(position);
+    linearVelocity.CrossFV(1);
+    const dstLen = linearVelocity.Normalize();
+    linearVelocity.Multiply(1 * Math.sqrt(env.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
+    // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
+
+
+    bodies.push(new Body(env, {
+        position: position,
+        linearVelocity: linearVelocity,
+        angle: Math.random() * 2 * Math.PI,
+        angularVelocity: 20 * (Math.random() - 0.5),
+        radius: Math.random() * .5 + .1
+    }));
 }
 
-const debugCtx = canvasDebug.getContext("2d");
-const debugDraw = (() => {
+
+const debugCtx = env.canvasDebug.getContext("2d");
+
+env.world.SetDebugDraw((() => {
     const debugDraw = new b2DebugDraw();
     debugDraw.SetSprite(debugCtx);
     debugDraw.SetFillAlpha(0.4);
@@ -177,14 +101,12 @@ const debugDraw = (() => {
     debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
     //debugDraw.SetDrawScale(1/10);
     return debugDraw;
-})();
-
-world.SetDebugDraw(debugDraw);
+})());
 
 
 
 
-const pointerHandler = new PointerHandler(world);
+const pointerHandler = new PointerHandler(env.world);
 const fpsTracker = new FpsTracker();
 
 
@@ -197,33 +119,32 @@ function update(timestamp: number) {
         fpsTracker.update(timestamp);
         pointerHandler.update();
         
-        world.ClearForces();
-        gravity.update();
+        env.world.ClearForces();
+        env.gravity.update();
 
-        world.Step(1 / 60, 10, 10);
-        world.ClearForces();
+        env.world.Step(1 / 60, 10, 10);
+        
+        env.gameContainer.update(1 / 60);
+
     }
     
     // render
     {
-        earth.render();
-        for (const body of bodies) {
-            body.render();
-        }
+        env.gameContainer.render();
 
         const scale = 10;
 
-        stage.position.set(
-            canvas.width / 2, 
-            canvas.height / 2);
+        env.stage.position.set(
+            env.canvas.width / 2, 
+            env.canvas.height / 2);
         
-        stage.scale.set(scale, scale);
+        env.stage.scale.set(scale, scale);
 
-        stage.pivot.set(
+        env.stage.pivot.set(
             earth.sprite.position.x, 
             earth.sprite.position.y);
 
-        renderer.render(stage);
+        env.renderer.render(env.stage);
 
         debugCtx.save();
         debugCtx.clearRect(0, 0, debugCtx.canvas.width, debugCtx.canvas.height);
@@ -235,10 +156,10 @@ function update(timestamp: number) {
         debugCtx.translate(
             - earth.body.GetPosition().x, 
             - earth.body.GetPosition().y);
-        world.DrawDebugData();
+            env.world.DrawDebugData();
         debugCtx.restore();
 
-        fpsLabel.innerText = `FPS ${fpsTracker.fps && fpsTracker.fps.toFixed(2)}`;
+        env.fpsLabel.innerText = `FPS ${fpsTracker.fps && fpsTracker.fps.toFixed(2)}`;
     }
 };
 

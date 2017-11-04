@@ -9,7 +9,8 @@ export class Gravity {
 
     constructor(
         private world: b2World,
-        gravitationalConstant: number = 10) {
+        gravitationalConstant: number = 10
+    ) {
         this.gravitationalConstant = gravitationalConstant;
     }
 
