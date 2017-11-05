@@ -34,8 +34,10 @@
         visibility: hidden;
     }
     #gui {
-        /* background-color: rgba(255, 255, 255, 0.171); */
+        background-color: rgba(255, 255, 255, 0.171);
+        padding: 10px;
         color: white;
+        display: inline-block;
     }
     #gui *[type="button"] {
         display: block;
@@ -48,6 +50,7 @@
     <canvas id="canvas-debug" class="display"></canvas>
     <div id="gui">
         <div id="fps-label"></div>
+        <div id="body-count-label"></div>
         <input id="pause-button" type="button" value="Pause" />
         <input id="track-rotation-button" type="button" value="Track rotation" />
         <input id="step-button" type="button" value="Step" />

@@ -39,6 +39,7 @@ class Enviornment {
     });
     stage = new PIXI.Container();
     fpsLabel = document.getElementById("fps-label");
+    bodyCountLabel = document.getElementById("body-count-label");
     pauseButton = document.getElementById("pause-button") as HTMLButtonElement;
     trackRotationButton = document.getElementById("track-rotation-button") as HTMLButtonElement;
     stepButton = document.getElementById("step-button") as HTMLButtonElement;
@@ -211,6 +212,7 @@ function run() {
             env.debugCtx.restore();
         }
         
+        env.bodyCountLabel.innerText = `Bodies: ${env.world.GetBodyCount()}`;
         env.fpsLabel.innerText = `FPS ${env.fpsTracker.fps && env.fpsTracker.fps.toFixed(2)}`
             + ` / UPS ${env.upsTracker.fps && env.upsTracker.fps.toFixed(2)}`;
     });

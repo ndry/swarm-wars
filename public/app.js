@@ -317,8 +317,8 @@ System.register("Probe", ["pixi.js", "box2dweb"], function (exports_6, context_6
                     if (Math.random() < .001) {
                         new Probe(this.env, {
                             position: {
-                                x: this.body.GetPosition().x + this.args.radius,
-                                y: this.body.GetPosition().y + this.args.radius
+                                x: this.body.GetPosition().x + this.args.radius * Math.cos(this.body.GetAngle()),
+                                y: this.body.GetPosition().y - this.args.radius * Math.sin(this.body.GetAngle())
                             },
                             linearVelocity: {
                                 x: this.body.GetLinearVelocity().x,
@@ -396,6 +396,7 @@ System.register("main", ["box2dweb", "FpsTracker", "Gravity", "pixi.js", "Earth"
                 env.world.DrawDebugData();
                 env.debugCtx.restore();
             }
+            env.bodyCountLabel.innerText = "Bodies: " + env.world.GetBodyCount();
             env.fpsLabel.innerText = "FPS " + (env.fpsTracker.fps && env.fpsTracker.fps.toFixed(2))
                 + (" / UPS " + (env.upsTracker.fps && env.upsTracker.fps.toFixed(2)));
         });
@@ -460,6 +461,7 @@ System.register("main", ["box2dweb", "FpsTracker", "Gravity", "pixi.js", "Earth"
                     });
                     this.stage = new pixi_js_1["default"].Container();
                     this.fpsLabel = document.getElementById("fps-label");
+                    this.bodyCountLabel = document.getElementById("body-count-label");
                     this.pauseButton = document.getElementById("pause-button");
                     this.trackRotationButton = document.getElementById("track-rotation-button");
                     this.stepButton = document.getElementById("step-button");
