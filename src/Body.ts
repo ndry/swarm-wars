@@ -13,13 +13,13 @@ export class Body {
     static createSpriteTexture(renderer: PIXI.CanvasRenderer | PIXI.WebGLRenderer, radius: number) {
         const g = new PIXI.Graphics();
         g.boundsPadding = 1;
-        g.beginFill(0xe6b4b4, .4);
-        g.lineStyle(1, 0xe6b4b4);
+        g.beginFill(0xb4b4b4, .4);
+        g.lineStyle(1, 0xb4b4b4);
         g.drawCircle(0, 0, radius);
         g.endFill();
         g.moveTo(0, 0);
         g.lineTo(radius, 0);
-        return renderer.generateTexture(g);
+        return renderer.generateTexture(g, 1, 5);
         
     };
 
@@ -76,7 +76,7 @@ export class Body {
         this.sprite.interactive = true;
         this.sprite.hitArea = new PIXI.Circle(0, 0, args.radius * this.env.pixelsPerMeter);
         this.sprite.on("click", () => env.camera.target = this.sprite);
-        this.sprite.on("mouseover", () => this.sprite.tint = 0x0000ff);
+        this.sprite.on("mouseover", () => this.sprite.tint = 0xa0a0a0);
         this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
         env.stage.addChild(this.sprite);
         

@@ -14,11 +14,14 @@ import PIXI from "pixi.js";
 
 import { Earth } from "./Earth";
 import { Body } from "./Body";
+import { Probe } from "./Probe";
 
 import Rx from 'rxjs/Rx';
 
 import { Camera } from "./Camera";
 import { timestamp } from "rxjs/operators";
+
+import { isVisible } from "./utils";
 
 
 class Enviornment {
@@ -114,6 +117,34 @@ for(var i = 0; i < 200; ++i) {
     }));
 }
 
+const probes: Probe[] = [];
+for(var i = 0; i < 100; ++i) {
+    const d = (Math.random() - .5) * 100;
+    const a = Math.random() * 2 * Math.PI;
+    const position = new b2Vec2(Math.cos(a), -Math.sin(a));
+    position.Multiply(d);
+    position.Add(earth.body.GetPosition());
+    
+    
+    const linearVelocity = earth.body.GetPosition().Copy();
+    linearVelocity.SetV(earth.body.GetPosition());
+    linearVelocity.Subtract(position);
+    linearVelocity.CrossFV(1);
+    const dstLen = linearVelocity.Normalize();
+    linearVelocity.Multiply(1 * Math.sqrt(env.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
+    // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
+
+
+    probes.push(new Probe(env, {
+        position: position,
+        linearVelocity: linearVelocity,
+        angle: Math.random() * 2 * Math.PI,
+        angularVelocity: 20 * (Math.random() - 0.5),
+        radius: Math.random() * .5 + .1,
+        color: (Math.random() < .5) ? 0xff0000 : 0x00ff00
+    }));
+}
+
 
 
 env.world.SetDebugDraw((() => {
@@ -130,6 +161,7 @@ env.world.SetDebugDraw((() => {
 
 
 const pointerHandler = new PointerHandler(env.world);
+const upsTracker = new FpsTracker();
 const fpsTracker = new FpsTracker();
 
 function update(dt: number) {
@@ -143,34 +175,37 @@ function update(dt: number) {
     env.updateEvent.next(dt);
 }
 
-Rx.Observable.interval(0, Rx.Scheduler.animationFrame)
-.timestamp()
-.subscribe(timestamped => {
-    // update
+Rx.Observable.interval(0, Rx.Scheduler.asap)
+.throttleTime(1000 / 60)
+.timeInterval()
+.subscribe(v => {
+    upsTracker.update(v.interval);
     if (!env.isPaused) {
-        fpsTracker.update(timestamped.timestamp);
         update(1 / 60)
     }
+})
 
-    // render
-    {
-        env.renderEvent.next(timestamped.timestamp);
+Rx.Observable.interval(0, Rx.Scheduler.animationFrame)
+.timeInterval()
+.subscribe(v => {
+    fpsTracker.update(v.interval);
+    
+    env.renderEvent.next(v.interval);
 
-        
-        env.camera.render();
-        env.renderer.render(env.stage);
-        
-        if (env.canvasDebug) {
-            env.debugCtx.save();
-            env.debugCtx.setTransform(1, 0, 0, 1, 0, 0);
-            env.debugCtx.clearRect(0, 0, env.debugCtx.canvas.width, env.debugCtx.canvas.height);
-            env.debugCtx.restore();
-            env.debugCtx.save();
-            env.camera.renderDebug();
-            env.world.DrawDebugData();
-            env.debugCtx.restore();
-        }
-        
-        env.fpsLabel.innerText = `FPS ${fpsTracker.fps && fpsTracker.fps.toFixed(2)}`;
+    env.camera.render();
+    env.renderer.render(env.stage);
+    
+    if (env.canvasDebug && isVisible(env.canvasDebug)) {
+        env.debugCtx.save();
+        env.debugCtx.setTransform(1, 0, 0, 1, 0, 0);
+        env.debugCtx.clearRect(0, 0, env.debugCtx.canvas.width, env.debugCtx.canvas.height);
+        env.debugCtx.restore();
+        env.debugCtx.save();
+        env.camera.renderDebug();
+        env.world.DrawDebugData();
+        env.debugCtx.restore();
     }
+    
+    env.fpsLabel.innerText = `FPS ${fpsTracker.fps && fpsTracker.fps.toFixed(2)} / UPS ${upsTracker.fps && upsTracker.fps.toFixed(2)}`;
 });
+

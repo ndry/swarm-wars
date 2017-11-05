@@ -35,14 +35,3 @@ export class Camera {
         }
     }
 }
-
-export namespace Camera {
-    export interface Target { 
-        pivot: {
-            x: number, 
-            y: number
-        }, 
-        rotation: number, 
-        scale: number 
-    }
-}

@@ -1,3 +1,3 @@
 declare module 'box2dweb' {
-    export = Box2D;
+    export default Box2D;
 }    

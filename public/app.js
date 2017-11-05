@@ -77,7 +77,7 @@ System.register("Body", ["pixi.js", "box2dweb"], function (exports_2, context_2)
                     this.sprite.interactive = true;
                     this.sprite.hitArea = new PIXI.Circle(0, 0, args.radius * this.env.pixelsPerMeter);
                     this.sprite.on("click", function () { return env.camera.target = _this.sprite; });
-                    this.sprite.on("mouseover", function () { return _this.sprite.tint = 0x0000ff; });
+                    this.sprite.on("mouseover", function () { return _this.sprite.tint = 0xa0a0a0; });
                     this.sprite.on("mouseout", function () { return _this.sprite.tint = 0xffffff; });
                     env.stage.addChild(this.sprite);
                     this.updateSubscription = env.updateEvent.subscribe(function (dt) { return _this.update(dt); });
@@ -86,13 +86,13 @@ System.register("Body", ["pixi.js", "box2dweb"], function (exports_2, context_2)
                 Body.createSpriteTexture = function (renderer, radius) {
                     var g = new PIXI.Graphics();
                     g.boundsPadding = 1;
-                    g.beginFill(0xe6b4b4, .4);
-                    g.lineStyle(1, 0xe6b4b4);
+                    g.beginFill(0xb4b4b4, .4);
+                    g.lineStyle(1, 0xb4b4b4);
                     g.drawCircle(0, 0, radius);
                     g.endFill();
                     g.moveTo(0, 0);
                     g.lineTo(radius, 0);
-                    return renderer.generateTexture(g);
+                    return renderer.generateTexture(g, 1, 5);
                 };
                 ;
                 Body.prototype.update = function (dt) {
@@ -151,7 +151,7 @@ System.register("Earth", ["pixi.js", "box2dweb"], function (exports_3, context_3
                     this.sprite.interactive = true;
                     this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
                     this.sprite.on("click", function () { return env.camera.target = _this.sprite; });
-                    this.sprite.on("mouseover", function () { return _this.sprite.tint = 0x0000ff; });
+                    this.sprite.on("mouseover", function () { return _this.sprite.tint = 0xa0a0a0; });
                     this.sprite.on("mouseout", function () { return _this.sprite.tint = 0xffffff; });
                     env.stage.addChild(this.sprite);
                     this.updateSubscription = env.updateEvent.subscribe(function (dt) { return _this.update(dt); });
@@ -160,13 +160,13 @@ System.register("Earth", ["pixi.js", "box2dweb"], function (exports_3, context_3
                 Earth.createSpriteTexture = function (renderer, radius) {
                     var g = new PIXI.Graphics();
                     g.boundsPadding = 1;
-                    g.beginFill(0xe6b4b4, .4);
-                    g.lineStyle(1, 0xe6b4b4, .8);
+                    g.beginFill(0xe6e6e6, .4);
+                    g.lineStyle(1, 0xe6e6e6);
                     g.drawCircle(0, 0, radius);
                     g.endFill();
                     g.moveTo(0, 0);
                     g.lineTo(radius, 0);
-                    return renderer.generateTexture(g);
+                    return renderer.generateTexture(g, 1, 5);
                 };
                 ;
                 Earth.prototype.update = function (dt) {
@@ -191,22 +191,19 @@ System.register("FpsTracker", [], function (exports_4, context_4) {
             FpsTracker = (function () {
                 function FpsTracker(historicalFactor) {
                     if (historicalFactor === void 0) { historicalFactor = 0.95; }
+                    this.fps = null;
                     this.historicalFactor = historicalFactor;
                 }
-                FpsTracker.prototype.update = function (timestamp) {
-                    if (this.lastTime) {
-                        var dt = timestamp - this.lastTime;
-                        var momentFps = 1 / dt * 1000;
-                        if (this.fps) {
-                            this.fps =
-                                this.fps * this.historicalFactor
-                                    + momentFps * (1 - this.historicalFactor);
-                        }
-                        else {
-                            this.fps = momentFps;
-                        }
+                FpsTracker.prototype.update = function (dt) {
+                    var momentFps = 1 / dt * 1000;
+                    if (this.fps !== null && isFinite(this.fps)) {
+                        this.fps =
+                            this.fps * this.historicalFactor
+                                + momentFps * (1 - this.historicalFactor);
                     }
-                    this.lastTime = timestamp;
+                    else {
+                        this.fps = momentFps;
+                    }
                 };
                 return FpsTracker;
             }());
@@ -345,8 +342,99 @@ System.register("PointerHandler", ["underscore", "box2dweb"], function (exports_
         }
     };
 });
-System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", "pixi.js", "Earth", "Body", "rxjs/Rx", "Camera"], function (exports_7, context_7) {
+System.register("Probe", ["pixi.js", "box2dweb"], function (exports_7, context_7) {
     var __moduleName = context_7 && context_7.id;
+    var PIXI, box2dweb_5, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Probe;
+    return {
+        setters: [
+            function (PIXI_3) {
+                PIXI = PIXI_3;
+            },
+            function (box2dweb_5_1) {
+                box2dweb_5 = box2dweb_5_1;
+            }
+        ],
+        execute: function () {
+            b2BodyDef = box2dweb_5["default"].Dynamics.b2BodyDef;
+            b2FixtureDef = box2dweb_5["default"].Dynamics.b2FixtureDef;
+            b2Body = box2dweb_5["default"].Dynamics.b2Body;
+            b2CircleShape = box2dweb_5["default"].Collision.Shapes.b2CircleShape;
+            Probe = (function () {
+                function Probe(env, args) {
+                    var _this = this;
+                    this.env = env;
+                    this.body = env.world.CreateBody((function () {
+                        var bodyDef = new b2BodyDef;
+                        bodyDef.type = b2Body.b2_dynamicBody;
+                        bodyDef.position.Set(args.position.x, args.position.y);
+                        bodyDef.linearVelocity.Set(args.linearVelocity.x, args.linearVelocity.y);
+                        bodyDef.angularVelocity = args.angularVelocity;
+                        bodyDef.angle = args.angle;
+                        return bodyDef;
+                    })());
+                    this.fixture = this.body.CreateFixture((function () {
+                        var fixDef = new b2FixtureDef;
+                        fixDef.density = 0.005;
+                        fixDef.friction = 1.0;
+                        fixDef.restitution = .1;
+                        fixDef.shape = new b2CircleShape(args.radius);
+                        return fixDef;
+                    })());
+                    this.sprite = new PIXI.Sprite(Probe.createSpriteTexture(env.renderer, args.radius * this.env.pixelsPerMeter, args.color));
+                    this.sprite.anchor.set(.5, .5);
+                    this.sprite.interactive = true;
+                    this.sprite.hitArea = new PIXI.Circle(0, 0, args.radius * this.env.pixelsPerMeter);
+                    this.sprite.on("click", function () { return env.camera.target = _this.sprite; });
+                    this.sprite.on("mouseover", function () { return _this.sprite.tint = 0xa0a0a0; });
+                    this.sprite.on("mouseout", function () { return _this.sprite.tint = 0xffffff; });
+                    env.stage.addChild(this.sprite);
+                    this.updateSubscription = env.updateEvent.subscribe(function (dt) { return _this.update(dt); });
+                    this.renderSubscription = env.renderEvent.subscribe(function () { return _this.render(); });
+                }
+                Probe.createSpriteTexture = function (renderer, radius, color) {
+                    var g = new PIXI.Graphics();
+                    g.boundsPadding = 1;
+                    g.beginFill(color, .4);
+                    g.lineStyle(1, color);
+                    g.drawCircle(0, 0, radius);
+                    g.endFill();
+                    g.moveTo(0, 0);
+                    g.lineTo(radius, 0);
+                    return renderer.generateTexture(g, 1, 5);
+                };
+                ;
+                Probe.prototype.update = function (dt) {
+                };
+                Probe.prototype.render = function () {
+                    this.sprite.x = this.body.GetPosition().x * this.env.pixelsPerMeter;
+                    this.sprite.y = this.body.GetPosition().y * this.env.pixelsPerMeter;
+                    this.sprite.rotation = this.body.GetAngle();
+                };
+                return Probe;
+            }());
+            exports_7("Probe", Probe);
+        }
+    };
+});
+System.register("utils", [], function (exports_8, context_8) {
+    var __moduleName = context_8 && context_8.id;
+    function isVisible(elt) {
+        var style = window.getComputedStyle(elt);
+        return +style.width !== 0
+            && +style.height !== 0
+            && +style.opacity !== 0
+            && style.display !== 'none'
+            && style.visibility !== 'hidden';
+    }
+    exports_8("isVisible", isVisible);
+    return {
+        setters: [],
+        execute: function () {
+        }
+    };
+});
+System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", "pixi.js", "Earth", "Body", "Probe", "rxjs/Rx", "Camera", "utils"], function (exports_9, context_9) {
+    var __moduleName = context_9 && context_9.id;
     function adjustDisplay() {
         env.canvas.width = env.canvas.clientWidth;
         env.canvas.height = env.canvas.clientHeight;
@@ -364,11 +452,11 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
         env.world.Step(dt, 10, 10);
         env.updateEvent.next(dt);
     }
-    var box2dweb_5, b2Vec2, b2World, b2DebugDraw, PointerHandler_1, FpsTracker_1, Gravity_1, pixi_js_1, Earth_1, Body_1, Rx_1, Camera_1, Enviornment, env, earth, bodies, i, pointerHandler, fpsTracker;
+    var box2dweb_6, b2Vec2, b2World, b2DebugDraw, PointerHandler_1, FpsTracker_1, Gravity_1, pixi_js_1, Earth_1, Body_1, Probe_1, Rx_1, Camera_1, utils_1, Enviornment, env, earth, bodies, i, probes, i, pointerHandler, upsTracker, fpsTracker;
     return {
         setters: [
-            function (box2dweb_5_1) {
-                box2dweb_5 = box2dweb_5_1;
+            function (box2dweb_6_1) {
+                box2dweb_6 = box2dweb_6_1;
             },
             function (PointerHandler_1_1) {
                 PointerHandler_1 = PointerHandler_1_1;
@@ -388,17 +476,23 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
             function (Body_1_1) {
                 Body_1 = Body_1_1;
             },
+            function (Probe_1_1) {
+                Probe_1 = Probe_1_1;
+            },
             function (Rx_1_1) {
                 Rx_1 = Rx_1_1;
             },
             function (Camera_1_1) {
                 Camera_1 = Camera_1_1;
+            },
+            function (utils_1_1) {
+                utils_1 = utils_1_1;
             }
         ],
         execute: function () {
-            b2Vec2 = box2dweb_5["default"].Common.Math.b2Vec2;
-            b2World = box2dweb_5["default"].Dynamics.b2World;
-            b2DebugDraw = box2dweb_5["default"].Dynamics.b2DebugDraw;
+            b2Vec2 = box2dweb_6["default"].Common.Math.b2Vec2;
+            b2World = box2dweb_6["default"].Dynamics.b2World;
+            b2DebugDraw = box2dweb_6["default"].Dynamics.b2DebugDraw;
             Enviornment = (function () {
                 function Enviornment() {
                     this.pixelsPerMeter = 30;
@@ -456,6 +550,29 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                     radius: Math.random() * .5 + .1
                 }));
             }
+            probes = [];
+            for (i = 0; i < 100; ++i) {
+                var d = (Math.random() - .5) * 100;
+                var a = Math.random() * 2 * Math.PI;
+                var position = new b2Vec2(Math.cos(a), -Math.sin(a));
+                position.Multiply(d);
+                position.Add(earth.body.GetPosition());
+                var linearVelocity = earth.body.GetPosition().Copy();
+                linearVelocity.SetV(earth.body.GetPosition());
+                linearVelocity.Subtract(position);
+                linearVelocity.CrossFV(1);
+                var dstLen = linearVelocity.Normalize();
+                linearVelocity.Multiply(1 * Math.sqrt(env.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
+                // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
+                probes.push(new Probe_1.Probe(env, {
+                    position: position,
+                    linearVelocity: linearVelocity,
+                    angle: Math.random() * 2 * Math.PI,
+                    angularVelocity: 20 * (Math.random() - 0.5),
+                    radius: Math.random() * .5 + .1,
+                    color: (Math.random() < .5) ? 0xff0000 : 0x00ff00
+                }));
+            }
             env.world.SetDebugDraw((function () {
                 var debugDraw = new b2DebugDraw();
                 debugDraw.SetSprite(env.debugCtx);
@@ -466,32 +583,35 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                 return debugDraw;
             })());
             pointerHandler = new PointerHandler_1.PointerHandler(env.world);
+            upsTracker = new FpsTracker_1.FpsTracker();
             fpsTracker = new FpsTracker_1.FpsTracker();
-            Rx_1["default"].Observable.interval(0, Rx_1["default"].Scheduler.animationFrame)
-                .timestamp()
-                .subscribe(function (timestamped) {
-                // update
+            Rx_1["default"].Observable.interval(0, Rx_1["default"].Scheduler.asap)
+                .throttleTime(1000 / 60)
+                .timeInterval()
+                .subscribe(function (v) {
+                upsTracker.update(v.interval);
                 if (!env.isPaused) {
-                    fpsTracker.update(timestamped.timestamp);
                     update(1 / 60);
                 }
-                // render
-                {
-                    env.renderEvent.next(timestamped.timestamp);
-                    env.camera.render();
-                    env.renderer.render(env.stage);
-                    if (env.canvasDebug) {
-                        env.debugCtx.save();
-                        env.debugCtx.setTransform(1, 0, 0, 1, 0, 0);
-                        env.debugCtx.clearRect(0, 0, env.debugCtx.canvas.width, env.debugCtx.canvas.height);
-                        env.debugCtx.restore();
-                        env.debugCtx.save();
-                        env.camera.renderDebug();
-                        env.world.DrawDebugData();
-                        env.debugCtx.restore();
-                    }
-                    env.fpsLabel.innerText = "FPS " + (fpsTracker.fps && fpsTracker.fps.toFixed(2));
+            });
+            Rx_1["default"].Observable.interval(0, Rx_1["default"].Scheduler.animationFrame)
+                .timeInterval()
+                .subscribe(function (v) {
+                fpsTracker.update(v.interval);
+                env.renderEvent.next(v.interval);
+                env.camera.render();
+                env.renderer.render(env.stage);
+                if (env.canvasDebug && utils_1.isVisible(env.canvasDebug)) {
+                    env.debugCtx.save();
+                    env.debugCtx.setTransform(1, 0, 0, 1, 0, 0);
+                    env.debugCtx.clearRect(0, 0, env.debugCtx.canvas.width, env.debugCtx.canvas.height);
+                    env.debugCtx.restore();
+                    env.debugCtx.save();
+                    env.camera.renderDebug();
+                    env.world.DrawDebugData();
+                    env.debugCtx.restore();
                 }
+                env.fpsLabel.innerText = "FPS " + (fpsTracker.fps && fpsTracker.fps.toFixed(2)) + " / UPS " + (upsTracker.fps && upsTracker.fps.toFixed(2));
             });
         }
     };
