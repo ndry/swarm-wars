@@ -251,114 +251,23 @@ System.register("Gravity", ["box2dweb"], function (exports_5, context_5) {
         }
     };
 });
-System.register("PointerHandler", ["underscore", "box2dweb"], function (exports_6, context_6) {
+System.register("Probe", ["pixi.js", "box2dweb"], function (exports_6, context_6) {
     var __moduleName = context_6 && context_6.id;
-    var underscore_1, box2dweb_4, b2Vec2, b2AABB, b2Body, b2MouseJointDef, PointerHandler;
+    var PIXI, box2dweb_4, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Probe;
     return {
         setters: [
-            function (underscore_1_1) {
-                underscore_1 = underscore_1_1;
+            function (PIXI_3) {
+                PIXI = PIXI_3;
             },
             function (box2dweb_4_1) {
                 box2dweb_4 = box2dweb_4_1;
             }
         ],
         execute: function () {
-            b2Vec2 = box2dweb_4["default"].Common.Math.b2Vec2;
-            b2AABB = box2dweb_4["default"].Collision.b2AABB;
+            b2BodyDef = box2dweb_4["default"].Dynamics.b2BodyDef;
+            b2FixtureDef = box2dweb_4["default"].Dynamics.b2FixtureDef;
             b2Body = box2dweb_4["default"].Dynamics.b2Body;
-            b2MouseJointDef = box2dweb_4["default"].Dynamics.Joints.b2MouseJointDef;
-            PointerHandler = (function () {
-                function PointerHandler(world) {
-                    this.world = world;
-                    underscore_1["default"].bindAll(this, "handlePointerDown", "handlePointerUp", "handlePointerMove");
-                    document.addEventListener("pointerdown", this.handlePointerDown, true);
-                    document.addEventListener("pointerup", this.handlePointerUp, true);
-                }
-                PointerHandler.prototype.handlePointerDown = function (e) {
-                    this.lastPointer = new b2Vec2(e.offsetX, e.offsetY);
-                    document.addEventListener("pointermove", this.handlePointerMove, true);
-                };
-                PointerHandler.prototype.handlePointerUp = function () {
-                    document.removeEventListener("pointermove", this.handlePointerMove, true);
-                    this.lastPointer = null;
-                };
-                PointerHandler.prototype.handlePointerMove = function (e) {
-                    this.lastPointer.Set(e.offsetX, e.offsetY);
-                    e.preventDefault();
-                };
-                PointerHandler.prototype.getBodyAtMouse = function () {
-                    var _this = this;
-                    var selectedBody = null;
-                    this.world.QueryAABB(function (fixture) {
-                        if (fixture.GetBody().GetType() == b2Body.b2_staticBody) {
-                            return true;
-                        }
-                        if (!fixture.GetShape().TestPoint(fixture.GetBody().GetTransform(), _this.lastPointer)) {
-                            return true;
-                        }
-                        selectedBody = fixture.GetBody();
-                        return false;
-                    }, (function () {
-                        var aabb = new b2AABB();
-                        aabb.lowerBound.Set(_this.lastPointer.x - 0.001, _this.lastPointer.y - 0.001);
-                        aabb.upperBound.Set(_this.lastPointer.x + 0.001, _this.lastPointer.y + 0.001);
-                        return aabb;
-                    })());
-                    return selectedBody;
-                };
-                PointerHandler.prototype.update = function () {
-                    var _this = this;
-                    if (this.lastPointer && (!this.joint)) {
-                        var body_1 = this.getBodyAtMouse();
-                        if (body_1) {
-                            this.joint = this.world.CreateJoint((function () {
-                                var def = new b2MouseJointDef();
-                                def.bodyA = _this.world.GetGroundBody();
-                                def.bodyB = body_1;
-                                def
-                                    .target
-                                    = _this.lastPointer;
-                                def.collideConnected = true;
-                                def.maxForce = 300.0 * body_1.GetMass();
-                                return def;
-                            })());
-                            body_1.SetAwake(true);
-                        }
-                    }
-                    if (this.joint) {
-                        if (this.lastPointer) {
-                            this.joint.SetTarget(this.lastPointer);
-                        }
-                        else {
-                            this.world.DestroyJoint(this.joint);
-                            this.joint = null;
-                        }
-                    }
-                };
-                return PointerHandler;
-            }());
-            exports_6("PointerHandler", PointerHandler);
-        }
-    };
-});
-System.register("Probe", ["pixi.js", "box2dweb"], function (exports_7, context_7) {
-    var __moduleName = context_7 && context_7.id;
-    var PIXI, box2dweb_5, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Probe;
-    return {
-        setters: [
-            function (PIXI_3) {
-                PIXI = PIXI_3;
-            },
-            function (box2dweb_5_1) {
-                box2dweb_5 = box2dweb_5_1;
-            }
-        ],
-        execute: function () {
-            b2BodyDef = box2dweb_5["default"].Dynamics.b2BodyDef;
-            b2FixtureDef = box2dweb_5["default"].Dynamics.b2FixtureDef;
-            b2Body = box2dweb_5["default"].Dynamics.b2Body;
-            b2CircleShape = box2dweb_5["default"].Collision.Shapes.b2CircleShape;
+            b2CircleShape = box2dweb_4["default"].Collision.Shapes.b2CircleShape;
             Probe = (function () {
                 function Probe(env, args) {
                     var _this = this;
@@ -412,12 +321,12 @@ System.register("Probe", ["pixi.js", "box2dweb"], function (exports_7, context_7
                 };
                 return Probe;
             }());
-            exports_7("Probe", Probe);
+            exports_6("Probe", Probe);
         }
     };
 });
-System.register("utils", [], function (exports_8, context_8) {
-    var __moduleName = context_8 && context_8.id;
+System.register("utils", [], function (exports_7, context_7) {
+    var __moduleName = context_7 && context_7.id;
     function isVisible(elt) {
         var style = window.getComputedStyle(elt);
         return +style.width !== 0
@@ -426,15 +335,15 @@ System.register("utils", [], function (exports_8, context_8) {
             && style.display !== 'none'
             && style.visibility !== 'hidden';
     }
-    exports_8("isVisible", isVisible);
+    exports_7("isVisible", isVisible);
     return {
         setters: [],
         execute: function () {
         }
     };
 });
-System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", "pixi.js", "Earth", "Body", "Probe", "rxjs/Rx", "Camera", "utils"], function (exports_9, context_9) {
-    var __moduleName = context_9 && context_9.id;
+System.register("main", ["box2dweb", "FpsTracker", "Gravity", "pixi.js", "Earth", "Body", "Probe", "rxjs/Rx", "Camera", "utils"], function (exports_8, context_8) {
+    var __moduleName = context_8 && context_8.id;
     function adjustDisplay() {
         env.canvas.width = env.canvas.clientWidth;
         env.canvas.height = env.canvas.clientHeight;
@@ -446,20 +355,46 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
         }
     }
     function update(dt) {
-        pointerHandler.update();
         env.world.ClearForces();
-        env.gravity.update();
+        if (env.isGravityOn) {
+            env.gravity.update();
+        }
         env.world.Step(dt, 10, 10);
         env.updateEvent.next(dt);
     }
-    var box2dweb_6, b2Vec2, b2World, b2DebugDraw, PointerHandler_1, FpsTracker_1, Gravity_1, pixi_js_1, Earth_1, Body_1, Probe_1, Rx_1, Camera_1, utils_1, Enviornment, env, earth, bodies, i, probes, i, pointerHandler, upsTracker, fpsTracker;
+    function run() {
+        renderIterationEvent
+            .timeInterval()["do"](function (v) { return env.fpsTracker.update(v.interval); })
+            .subscribe(function (v) {
+            env.renderEvent.next(v.interval);
+            env.camera.render();
+            env.renderer.render(env.stage);
+            if (env.canvasDebug && utils_1.isVisible(env.canvasDebug)) {
+                env.debugCtx.save();
+                env.debugCtx.setTransform(1, 0, 0, 1, 0, 0);
+                env.debugCtx.clearRect(0, 0, env.debugCtx.canvas.width, env.debugCtx.canvas.height);
+                env.debugCtx.restore();
+                env.debugCtx.save();
+                env.camera.renderDebug();
+                env.world.DrawDebugData();
+                env.debugCtx.restore();
+            }
+            env.fpsLabel.innerText = "FPS " + (env.fpsTracker.fps && env.fpsTracker.fps.toFixed(2))
+                + (" / UPS " + (env.upsTracker.fps && env.upsTracker.fps.toFixed(2)));
+        });
+        updateIterationEvent
+            .timeInterval()["do"](function (v) { return env.upsTracker.update(v.interval); })
+            .subscribe(function (v) {
+            if (!env.isPaused) {
+                update(1 / env.targetUps);
+            }
+        });
+    }
+    var box2dweb_5, b2Vec2, b2World, b2DebugDraw, FpsTracker_1, Gravity_1, pixi_js_1, Earth_1, Body_1, Probe_1, Rx_1, Camera_1, utils_1, Enviornment, env, earth, bodies, i, probes, i, renderIterationEvent, updateIterationEvent;
     return {
         setters: [
-            function (box2dweb_6_1) {
-                box2dweb_6 = box2dweb_6_1;
-            },
-            function (PointerHandler_1_1) {
-                PointerHandler_1 = PointerHandler_1_1;
+            function (box2dweb_5_1) {
+                box2dweb_5 = box2dweb_5_1;
             },
             function (FpsTracker_1_1) {
                 FpsTracker_1 = FpsTracker_1_1;
@@ -490,12 +425,15 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
             }
         ],
         execute: function () {
-            b2Vec2 = box2dweb_6["default"].Common.Math.b2Vec2;
-            b2World = box2dweb_6["default"].Dynamics.b2World;
-            b2DebugDraw = box2dweb_6["default"].Dynamics.b2DebugDraw;
+            b2Vec2 = box2dweb_5["default"].Common.Math.b2Vec2;
+            b2World = box2dweb_5["default"].Dynamics.b2World;
+            b2DebugDraw = box2dweb_5["default"].Dynamics.b2DebugDraw;
             Enviornment = (function () {
                 function Enviornment() {
                     this.pixelsPerMeter = 30;
+                    this.targetUps = 60;
+                    this.upsTracker = new FpsTracker_1.FpsTracker();
+                    this.fpsTracker = new FpsTracker_1.FpsTracker();
                     this.canvas = document.getElementById("canvas");
                     this.canvasDebug = document.getElementById("canvas-debug");
                     this.debugCtx = this.canvasDebug.getContext("2d");
@@ -508,6 +446,8 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                     this.pauseButton = document.getElementById("pause-button");
                     this.trackRotationButton = document.getElementById("track-rotation-button");
                     this.stepButton = document.getElementById("step-button");
+                    this.toggleGravityButton = document.getElementById("toggle-gravity-button");
+                    this.isGravityOn = true;
                     this.world = new b2World(new b2Vec2(0, 0), true);
                     this.gravity = new Gravity_1.Gravity(this.world);
                     this.updateEvent = new Rx_1["default"].Subject();
@@ -521,6 +461,7 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
             env.pauseButton.addEventListener("click", function () { return env.isPaused = !env.isPaused; });
             env.trackRotationButton.addEventListener("click", function () { return env.camera.trackRotation = !env.camera.trackRotation; });
             env.stepButton.addEventListener("click", function () { return update(1 / 60); });
+            env.toggleGravityButton.addEventListener("click", function () { return env.isGravityOn = !env.isGravityOn; });
             window.addEventListener("wheel", function (e) {
                 env.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
             });
@@ -529,7 +470,7 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
             earth = new Earth_1.Earth(env);
             env.camera.target = earth.sprite;
             bodies = [];
-            for (i = 0; i < 200; ++i) {
+            for (i = 0; i < 100; ++i) {
                 var d = (Math.random() - .5) * 100;
                 var a = Math.random() * 2 * Math.PI;
                 var position = new b2Vec2(Math.cos(a), -Math.sin(a));
@@ -582,37 +523,17 @@ System.register("main", ["box2dweb", "PointerHandler", "FpsTracker", "Gravity", 
                 //debugDraw.SetDrawScale(1/10);
                 return debugDraw;
             })());
-            pointerHandler = new PointerHandler_1.PointerHandler(env.world);
-            upsTracker = new FpsTracker_1.FpsTracker();
-            fpsTracker = new FpsTracker_1.FpsTracker();
-            Rx_1["default"].Observable.interval(0, Rx_1["default"].Scheduler.asap)
-                .throttleTime(1000 / 60)
-                .timeInterval()
-                .subscribe(function (v) {
-                upsTracker.update(v.interval);
-                if (!env.isPaused) {
-                    update(1 / 60);
+            renderIterationEvent = new Rx_1["default"].Subject();
+            updateIterationEvent = Rx_1["default"].Observable
+                .interval(0, Rx_1["default"].Scheduler.asap)
+                .throttleTime(1000 / env.targetUps)
+                .scan(function (lastAnimationFrameRequest) {
+                if (lastAnimationFrameRequest !== null) {
+                    cancelAnimationFrame(lastAnimationFrameRequest);
                 }
-            });
-            Rx_1["default"].Observable.interval(0, Rx_1["default"].Scheduler.animationFrame)
-                .timeInterval()
-                .subscribe(function (v) {
-                fpsTracker.update(v.interval);
-                env.renderEvent.next(v.interval);
-                env.camera.render();
-                env.renderer.render(env.stage);
-                if (env.canvasDebug && utils_1.isVisible(env.canvasDebug)) {
-                    env.debugCtx.save();
-                    env.debugCtx.setTransform(1, 0, 0, 1, 0, 0);
-                    env.debugCtx.clearRect(0, 0, env.debugCtx.canvas.width, env.debugCtx.canvas.height);
-                    env.debugCtx.restore();
-                    env.debugCtx.save();
-                    env.camera.renderDebug();
-                    env.world.DrawDebugData();
-                    env.debugCtx.restore();
-                }
-                env.fpsLabel.innerText = "FPS " + (fpsTracker.fps && fpsTracker.fps.toFixed(2)) + " / UPS " + (upsTracker.fps && upsTracker.fps.toFixed(2));
-            });
+                return requestAnimationFrame(function () { return renderIterationEvent.next(); });
+            }, null);
+            run();
         }
     };
 });
