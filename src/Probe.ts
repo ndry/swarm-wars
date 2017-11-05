@@ -89,8 +89,8 @@ export class Probe {
         if (Math.random() < .001) {
             new Probe(this.env, {
                 position: {
-                    x: this.body.GetPosition().x + this.args.radius,
-                    y: this.body.GetPosition().y + this.args.radius
+                    x: this.body.GetPosition().x + this.args.radius * Math.cos(this.body.GetAngle()),
+                    y: this.body.GetPosition().y - this.args.radius * Math.sin(this.body.GetAngle())
                 },
                 linearVelocity: {
                     x: this.body.GetLinearVelocity().x,
