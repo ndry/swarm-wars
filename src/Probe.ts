@@ -39,7 +39,7 @@ export class Probe {
             renderEvent: Rx.Observable<number>,
             camera: Camera
         },
-        args: {
+        private args: {
             position: {
                 x: number,
                 y: number
@@ -86,7 +86,22 @@ export class Probe {
     }
 
     update(dt: number) {
-        
+        if (Math.random() < .001) {
+            new Probe(this.env, {
+                position: {
+                    x: this.body.GetPosition().x + this.args.radius,
+                    y: this.body.GetPosition().y + this.args.radius
+                },
+                linearVelocity: {
+                    x: this.body.GetLinearVelocity().x,
+                    y: this.body.GetLinearVelocity().y
+                },
+                angle: -this.body.GetAngle(),
+                angularVelocity: -this.body.GetAngularVelocity(),
+                radius: this.args.radius,
+                color: this.args.color
+            });
+        }
     }
         
     render() {

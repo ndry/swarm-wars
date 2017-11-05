@@ -272,6 +272,7 @@ System.register("Probe", ["pixi.js", "box2dweb"], function (exports_6, context_6
                 function Probe(env, args) {
                     var _this = this;
                     this.env = env;
+                    this.args = args;
                     this.body = env.world.CreateBody((function () {
                         var bodyDef = new b2BodyDef;
                         bodyDef.type = b2Body.b2_dynamicBody;
@@ -313,6 +314,22 @@ System.register("Probe", ["pixi.js", "box2dweb"], function (exports_6, context_6
                 };
                 ;
                 Probe.prototype.update = function (dt) {
+                    if (Math.random() < .001) {
+                        new Probe(this.env, {
+                            position: {
+                                x: this.body.GetPosition().x + this.args.radius,
+                                y: this.body.GetPosition().y + this.args.radius
+                            },
+                            linearVelocity: {
+                                x: this.body.GetLinearVelocity().x,
+                                y: this.body.GetLinearVelocity().y
+                            },
+                            angle: -this.body.GetAngle(),
+                            angularVelocity: -this.body.GetAngularVelocity(),
+                            radius: this.args.radius,
+                            color: this.args.color
+                        });
+                    }
                 };
                 Probe.prototype.render = function () {
                     this.sprite.x = this.body.GetPosition().x * this.env.pixelsPerMeter;
