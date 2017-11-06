@@ -15,10 +15,12 @@ export class Body {
         g.boundsPadding = 1;
         g.beginFill(0xb4b4b4, .4);
         g.lineStyle(1, 0xb4b4b4);
-        g.drawCircle(0, 0, radius);
+        const cx = renderer instanceof PIXI.WebGLRenderer ? 0 : radius + g.boundsPadding;
+        const cy = renderer instanceof PIXI.WebGLRenderer ? 0 : radius + g.boundsPadding;
+        g.drawCircle(cx, cy, radius);
         g.endFill();
-        g.moveTo(0, 0);
-        g.lineTo(radius, 0);
+        g.moveTo(cx, cy);
+        g.lineTo(cx + radius, cy);
         return renderer.generateTexture(g, 1, 5);
         
     };
