@@ -48,6 +48,7 @@ export class Probe {
             angle: number,
             angularVelocity: number,
             radius: number,
+            density: number,
             color: BABYLON.Color3
         }
     ) {
@@ -62,7 +63,7 @@ export class Probe {
         })());
         this.fixture = this.body.CreateFixture((() => {
             var fixDef = new b2FixtureDef;
-            fixDef.density = 0.005;
+            fixDef.density = args.density;
             fixDef.friction = 1.0;
             fixDef.restitution = .1;
             fixDef.shape = new b2CircleShape(args.radius);
@@ -107,7 +108,8 @@ export class Probe {
                 angle: -this.body.GetAngle(),
                 angularVelocity: -this.body.GetAngularVelocity(),
                 radius: this.args.radius,
-                color: this.args.color
+                color: this.args.color,
+                density: this.fixture.GetDensity()
             });
         }
     }

@@ -71,7 +71,7 @@ class Enviornment {
         
         const camera = new BABYLON.ArcRotateCamera('camera1', Math.PI / 2, 0, 100, new BABYLON.Vector3(0, 0, 0), this.graphics.scene);
         camera.lowerRadiusLimit = 2;
-        camera.upperRadiusLimit = 500;
+        camera.upperRadiusLimit = 50000;
 
 
 

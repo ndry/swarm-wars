@@ -5,6 +5,7 @@ import b2World = Box2D.Dynamics.b2World;
 
 import { Gravity } from "./Gravity";
 
+
 export class Physics {
     isGravityOn = true;
     

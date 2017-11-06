@@ -11,7 +11,7 @@ import BABYLON from "babylonjs";
 import Rx from 'rxjs/Rx';
 import { Camera } from "./Camera";
 
-export namespace Body {
+export namespace Planetoid {
     export interface Environment {
         physics: {
             world: b2World
@@ -27,7 +27,7 @@ export namespace Body {
     }
 }
 
-export class Body {
+export class Planetoid {
     body: b2Body;
     fixture: b2Fixture;
     mesh: BABYLON.Mesh;
@@ -35,7 +35,7 @@ export class Body {
     renderSubscription: Rx.Subscription;
 
     constructor(
-        private env: Body.Environment,
+        private env: Planetoid.Environment,
         args: {
             position: {
                 x: number,
@@ -47,7 +47,8 @@ export class Body {
             },
             angle: number,
             angularVelocity: number,
-            radius: number
+            radius: number,
+            density: number
         }
     ) {
         this.body = env.physics.world.CreateBody((() => {
@@ -61,7 +62,7 @@ export class Body {
         })());
         this.fixture = this.body.CreateFixture((() => {
             var fixDef = new b2FixtureDef;
-            fixDef.density = 0.005;
+            fixDef.density = args.density;
             fixDef.friction = 1.0;
             fixDef.restitution = .1;
             fixDef.shape = new b2CircleShape(args.radius);

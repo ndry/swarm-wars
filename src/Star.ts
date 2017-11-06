@@ -11,7 +11,7 @@ import BABYLON from "babylonjs";
 import Rx from 'rxjs/Rx';
 import { Camera } from "./Camera";
 
-export namespace Earth {
+export namespace Star {
     export interface Environment {
         physics: {
             world: b2World
@@ -27,7 +27,7 @@ export namespace Earth {
     }
 }
 
-export class Earth {
+export class Star {
     body: b2Body;
     fixture: b2Fixture;
     mesh: BABYLON.Mesh;
@@ -36,31 +36,41 @@ export class Earth {
     renderSubscription: Rx.Subscription;
 
     constructor(
-        private env: Earth.Environment
+        private env: Star.Environment,        
+        args: {
+            position: {
+                x: number,
+                y: number
+            },
+            linearVelocity: {
+                x: number,
+                y: number
+            },
+            angle: number,
+            angularVelocity: number,
+            radius: number,
+            density: number
+        }
     ) {
-        const radius = 1;
-
         this.body = env.physics.world.CreateBody((() => {
             var bodyDef = new b2BodyDef;
             bodyDef.type = b2Body.b2_dynamicBody;
-            bodyDef.position.x = 0;
-            bodyDef.position.y = 0;
-            bodyDef.angularVelocity = 2 * (Math.random() - 0.5);
-            // bodyDef.linearVelocity.Set(10 * (Math.random() - 0.5), 10 * (Math.random() - 0.5));
+            bodyDef.position.Set(args.position.x, args.position.y);
+            bodyDef.linearVelocity.Set(args.linearVelocity.x, args.linearVelocity.y);
+            bodyDef.angularVelocity = args.angularVelocity;
+            bodyDef.angle = args.angle;
             return bodyDef;
         })());
         this.fixture = this.body.CreateFixture((() => {
             var fixDef = new b2FixtureDef;
-            fixDef.density = 10.0;
+            fixDef.density = args.density;
             fixDef.friction = 1.0;
             fixDef.restitution = .1;
-            fixDef.shape = new b2CircleShape(
-                1
-            );
+            fixDef.shape = new b2CircleShape(args.radius);
             return fixDef;
         })());
 
-        this.mesh = BABYLON.MeshBuilder.CreateSphere("", {segments: 4, diameter: radius * 2}, this.env.graphics.scene);
+        this.mesh = BABYLON.MeshBuilder.CreateSphere("", {segments: 4, diameter: args.radius * 2}, this.env.graphics.scene);
         const m = new BABYLON.StandardMaterial("", env.graphics.scene);
         m.emissiveColor = new BABYLON.Color3(1, 1, 1);
         this.mesh.material = m;

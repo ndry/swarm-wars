@@ -33,148 +33,8 @@ System.register("Camera", [], function (exports_1, context_1) {
         }
     };
 });
-System.register("Body", ["box2dweb", "babylonjs"], function (exports_2, context_2) {
+System.register("FpsTracker", [], function (exports_2, context_2) {
     var __moduleName = context_2 && context_2.id;
-    var box2dweb_1, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, babylonjs_1, Body;
-    return {
-        setters: [
-            function (box2dweb_1_1) {
-                box2dweb_1 = box2dweb_1_1;
-            },
-            function (babylonjs_1_1) {
-                babylonjs_1 = babylonjs_1_1;
-            }
-        ],
-        execute: function () {
-            b2BodyDef = box2dweb_1.default.Dynamics.b2BodyDef;
-            b2FixtureDef = box2dweb_1.default.Dynamics.b2FixtureDef;
-            b2Body = box2dweb_1.default.Dynamics.b2Body;
-            b2CircleShape = box2dweb_1.default.Collision.Shapes.b2CircleShape;
-            Body = class Body {
-                constructor(env, args) {
-                    this.env = env;
-                    this.body = env.physics.world.CreateBody((() => {
-                        var bodyDef = new b2BodyDef;
-                        bodyDef.type = b2Body.b2_dynamicBody;
-                        bodyDef.position.Set(args.position.x, args.position.y);
-                        bodyDef.linearVelocity.Set(args.linearVelocity.x, args.linearVelocity.y);
-                        bodyDef.angularVelocity = args.angularVelocity;
-                        bodyDef.angle = args.angle;
-                        return bodyDef;
-                    })());
-                    this.fixture = this.body.CreateFixture((() => {
-                        var fixDef = new b2FixtureDef;
-                        fixDef.density = 0.005;
-                        fixDef.friction = 1.0;
-                        fixDef.restitution = .1;
-                        fixDef.shape = new b2CircleShape(args.radius);
-                        return fixDef;
-                    })());
-                    this.mesh = babylonjs_1.default.MeshBuilder.CreateSphere("", { segments: 4, diameter: args.radius * 2 }, this.env.graphics.scene);
-                    const m = new babylonjs_1.default.StandardMaterial("", env.graphics.scene);
-                    m.diffuseColor = new babylonjs_1.default.Color3(.5, .5, .5);
-                    this.mesh.material = m;
-                    this.mesh.outlineColor = new babylonjs_1.default.Color3(0, 0, 1);
-                    this.mesh.outlineWidth = .05;
-                    this.mesh.actionManager = new babylonjs_1.default.ActionManager(this.env.graphics.scene);
-                    this.mesh.actionManager.registerAction(new babylonjs_1.default.ExecuteCodeAction(babylonjs_1.default.ActionManager.OnPointerOverTrigger, evt => {
-                        this.mesh.renderOutline = true;
-                    }));
-                    this.mesh.actionManager.registerAction(new babylonjs_1.default.ExecuteCodeAction(babylonjs_1.default.ActionManager.OnPointerOutTrigger, evt => {
-                        this.mesh.renderOutline = false;
-                    }));
-                    this.mesh.actionManager.registerAction(new babylonjs_1.default.ExecuteCodeAction(babylonjs_1.default.ActionManager.OnPickTrigger, evt => {
-                        this.env.graphics.camera.lockedTarget = this.mesh;
-                    }));
-                    this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
-                    this.renderSubscription = env.renderEvent.subscribe(() => this.render());
-                }
-                update(dt) {
-                }
-                render() {
-                    this.mesh.position.x = this.body.GetPosition().x;
-                    this.mesh.position.z = this.body.GetPosition().y;
-                    this.mesh.rotation.y = this.body.GetAngle();
-                }
-            };
-            exports_2("Body", Body);
-        }
-    };
-});
-System.register("Earth", ["box2dweb", "babylonjs"], function (exports_3, context_3) {
-    var __moduleName = context_3 && context_3.id;
-    var box2dweb_2, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, babylonjs_2, Earth;
-    return {
-        setters: [
-            function (box2dweb_2_1) {
-                box2dweb_2 = box2dweb_2_1;
-            },
-            function (babylonjs_2_1) {
-                babylonjs_2 = babylonjs_2_1;
-            }
-        ],
-        execute: function () {
-            b2BodyDef = box2dweb_2.default.Dynamics.b2BodyDef;
-            b2FixtureDef = box2dweb_2.default.Dynamics.b2FixtureDef;
-            b2Body = box2dweb_2.default.Dynamics.b2Body;
-            b2CircleShape = box2dweb_2.default.Collision.Shapes.b2CircleShape;
-            Earth = class Earth {
-                constructor(env) {
-                    this.env = env;
-                    const radius = 1;
-                    this.body = env.physics.world.CreateBody((() => {
-                        var bodyDef = new b2BodyDef;
-                        bodyDef.type = b2Body.b2_dynamicBody;
-                        bodyDef.position.x = 0;
-                        bodyDef.position.y = 0;
-                        bodyDef.angularVelocity = 2 * (Math.random() - 0.5);
-                        // bodyDef.linearVelocity.Set(10 * (Math.random() - 0.5), 10 * (Math.random() - 0.5));
-                        return bodyDef;
-                    })());
-                    this.fixture = this.body.CreateFixture((() => {
-                        var fixDef = new b2FixtureDef;
-                        fixDef.density = 10.0;
-                        fixDef.friction = 1.0;
-                        fixDef.restitution = .1;
-                        fixDef.shape = new b2CircleShape(1);
-                        return fixDef;
-                    })());
-                    this.mesh = babylonjs_2.default.MeshBuilder.CreateSphere("", { segments: 4, diameter: radius * 2 }, this.env.graphics.scene);
-                    const m = new babylonjs_2.default.StandardMaterial("", env.graphics.scene);
-                    m.emissiveColor = new babylonjs_2.default.Color3(1, 1, 1);
-                    this.mesh.material = m;
-                    this.light = new babylonjs_2.default.PointLight("", new babylonjs_2.default.Vector3(0, 0, 0), this.env.graphics.scene);
-                    this.mesh.outlineColor = new babylonjs_2.default.Color3(0, 0, 1);
-                    this.mesh.outlineWidth = .05;
-                    this.mesh.actionManager = new babylonjs_2.default.ActionManager(this.env.graphics.scene);
-                    this.mesh.actionManager.registerAction(new babylonjs_2.default.ExecuteCodeAction(babylonjs_2.default.ActionManager.OnPointerOverTrigger, evt => {
-                        this.mesh.renderOutline = true;
-                    }));
-                    this.mesh.actionManager.registerAction(new babylonjs_2.default.ExecuteCodeAction(babylonjs_2.default.ActionManager.OnPointerOutTrigger, evt => {
-                        this.mesh.renderOutline = false;
-                    }));
-                    this.mesh.actionManager.registerAction(new babylonjs_2.default.ExecuteCodeAction(babylonjs_2.default.ActionManager.OnPickTrigger, evt => {
-                        this.env.graphics.camera.lockedTarget = this.mesh;
-                    }));
-                    this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
-                    this.renderSubscription = env.renderEvent.subscribe(() => this.render());
-                }
-                update(dt) {
-                }
-                render() {
-                    this.mesh.position.x = this.body.GetPosition().x;
-                    this.mesh.position.z = this.body.GetPosition().y;
-                    this.mesh.rotation.y = this.body.GetAngle();
-                    this.light.position.x = this.body.GetPosition().x;
-                    this.light.position.z = this.body.GetPosition().y;
-                }
-            };
-            exports_3("Earth", Earth);
-        }
-    };
-});
-System.register("FpsTracker", [], function (exports_4, context_4) {
-    var __moduleName = context_4 && context_4.id;
     var FpsTracker;
     return {
         setters: [],
@@ -196,21 +56,21 @@ System.register("FpsTracker", [], function (exports_4, context_4) {
                     }
                 }
             };
-            exports_4("FpsTracker", FpsTracker);
+            exports_2("FpsTracker", FpsTracker);
         }
     };
 });
-System.register("physics/Gravity", ["box2dweb"], function (exports_5, context_5) {
-    var __moduleName = context_5 && context_5.id;
-    var box2dweb_3, b2Vec2, Gravity;
+System.register("physics/Gravity", ["box2dweb"], function (exports_3, context_3) {
+    var __moduleName = context_3 && context_3.id;
+    var box2dweb_1, b2Vec2, Gravity;
     return {
         setters: [
-            function (box2dweb_3_1) {
-                box2dweb_3 = box2dweb_3_1;
+            function (box2dweb_1_1) {
+                box2dweb_1 = box2dweb_1_1;
             }
         ],
         execute: function () {
-            b2Vec2 = box2dweb_3.default.Common.Math.b2Vec2;
+            b2Vec2 = box2dweb_1.default.Common.Math.b2Vec2;
             Gravity = class Gravity {
                 constructor(world, gravitationalConstant = 10) {
                     this.world = world;
@@ -234,25 +94,25 @@ System.register("physics/Gravity", ["box2dweb"], function (exports_5, context_5)
                     }
                 }
             };
-            exports_5("Gravity", Gravity);
+            exports_3("Gravity", Gravity);
         }
     };
 });
-System.register("physics/Physics", ["box2dweb", "physics/Gravity"], function (exports_6, context_6) {
-    var __moduleName = context_6 && context_6.id;
-    var box2dweb_4, b2Vec2, b2World, Gravity_1, Physics;
+System.register("physics/Physics", ["box2dweb", "physics/Gravity"], function (exports_4, context_4) {
+    var __moduleName = context_4 && context_4.id;
+    var box2dweb_2, b2Vec2, b2World, Gravity_1, Physics;
     return {
         setters: [
-            function (box2dweb_4_1) {
-                box2dweb_4 = box2dweb_4_1;
+            function (box2dweb_2_1) {
+                box2dweb_2 = box2dweb_2_1;
             },
             function (Gravity_1_1) {
                 Gravity_1 = Gravity_1_1;
             }
         ],
         execute: function () {
-            b2Vec2 = box2dweb_4.default.Common.Math.b2Vec2;
-            b2World = box2dweb_4.default.Dynamics.b2World;
+            b2Vec2 = box2dweb_2.default.Common.Math.b2Vec2;
+            b2World = box2dweb_2.default.Dynamics.b2World;
             Physics = class Physics {
                 constructor() {
                     this.isGravityOn = true;
@@ -267,12 +127,12 @@ System.register("physics/Physics", ["box2dweb", "physics/Gravity"], function (ex
                     this.world.Step(dt, 10, 10);
                 }
             };
-            exports_6("Physics", Physics);
+            exports_4("Physics", Physics);
         }
     };
 });
-System.register("utils", [], function (exports_7, context_7) {
-    var __moduleName = context_7 && context_7.id;
+System.register("utils", [], function (exports_5, context_5) {
+    var __moduleName = context_5 && context_5.id;
     function isVisible(elt) {
         var style = window.getComputedStyle(elt);
         return +style.width !== 0
@@ -281,10 +141,149 @@ System.register("utils", [], function (exports_7, context_7) {
             && style.display !== 'none'
             && style.visibility !== 'hidden';
     }
-    exports_7("isVisible", isVisible);
+    exports_5("isVisible", isVisible);
     return {
         setters: [],
         execute: function () {
+        }
+    };
+});
+System.register("Star", ["box2dweb", "babylonjs"], function (exports_6, context_6) {
+    var __moduleName = context_6 && context_6.id;
+    var box2dweb_3, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, babylonjs_1, Star;
+    return {
+        setters: [
+            function (box2dweb_3_1) {
+                box2dweb_3 = box2dweb_3_1;
+            },
+            function (babylonjs_1_1) {
+                babylonjs_1 = babylonjs_1_1;
+            }
+        ],
+        execute: function () {
+            b2BodyDef = box2dweb_3.default.Dynamics.b2BodyDef;
+            b2FixtureDef = box2dweb_3.default.Dynamics.b2FixtureDef;
+            b2Body = box2dweb_3.default.Dynamics.b2Body;
+            b2CircleShape = box2dweb_3.default.Collision.Shapes.b2CircleShape;
+            Star = class Star {
+                constructor(env, args) {
+                    this.env = env;
+                    this.body = env.physics.world.CreateBody((() => {
+                        var bodyDef = new b2BodyDef;
+                        bodyDef.type = b2Body.b2_dynamicBody;
+                        bodyDef.position.Set(args.position.x, args.position.y);
+                        bodyDef.linearVelocity.Set(args.linearVelocity.x, args.linearVelocity.y);
+                        bodyDef.angularVelocity = args.angularVelocity;
+                        bodyDef.angle = args.angle;
+                        return bodyDef;
+                    })());
+                    this.fixture = this.body.CreateFixture((() => {
+                        var fixDef = new b2FixtureDef;
+                        fixDef.density = args.density;
+                        fixDef.friction = 1.0;
+                        fixDef.restitution = .1;
+                        fixDef.shape = new b2CircleShape(args.radius);
+                        return fixDef;
+                    })());
+                    this.mesh = babylonjs_1.default.MeshBuilder.CreateSphere("", { segments: 4, diameter: args.radius * 2 }, this.env.graphics.scene);
+                    const m = new babylonjs_1.default.StandardMaterial("", env.graphics.scene);
+                    m.emissiveColor = new babylonjs_1.default.Color3(1, 1, 1);
+                    this.mesh.material = m;
+                    this.light = new babylonjs_1.default.PointLight("", new babylonjs_1.default.Vector3(0, 0, 0), this.env.graphics.scene);
+                    this.mesh.outlineColor = new babylonjs_1.default.Color3(0, 0, 1);
+                    this.mesh.outlineWidth = .05;
+                    this.mesh.actionManager = new babylonjs_1.default.ActionManager(this.env.graphics.scene);
+                    this.mesh.actionManager.registerAction(new babylonjs_1.default.ExecuteCodeAction(babylonjs_1.default.ActionManager.OnPointerOverTrigger, evt => {
+                        this.mesh.renderOutline = true;
+                    }));
+                    this.mesh.actionManager.registerAction(new babylonjs_1.default.ExecuteCodeAction(babylonjs_1.default.ActionManager.OnPointerOutTrigger, evt => {
+                        this.mesh.renderOutline = false;
+                    }));
+                    this.mesh.actionManager.registerAction(new babylonjs_1.default.ExecuteCodeAction(babylonjs_1.default.ActionManager.OnPickTrigger, evt => {
+                        this.env.graphics.camera.lockedTarget = this.mesh;
+                    }));
+                    this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
+                    this.renderSubscription = env.renderEvent.subscribe(() => this.render());
+                }
+                update(dt) {
+                }
+                render() {
+                    this.mesh.position.x = this.body.GetPosition().x;
+                    this.mesh.position.z = this.body.GetPosition().y;
+                    this.mesh.rotation.y = this.body.GetAngle();
+                    this.light.position.x = this.body.GetPosition().x;
+                    this.light.position.z = this.body.GetPosition().y;
+                }
+            };
+            exports_6("Star", Star);
+        }
+    };
+});
+System.register("Planetoid", ["box2dweb", "babylonjs"], function (exports_7, context_7) {
+    var __moduleName = context_7 && context_7.id;
+    var box2dweb_4, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, babylonjs_2, Planetoid;
+    return {
+        setters: [
+            function (box2dweb_4_1) {
+                box2dweb_4 = box2dweb_4_1;
+            },
+            function (babylonjs_2_1) {
+                babylonjs_2 = babylonjs_2_1;
+            }
+        ],
+        execute: function () {
+            b2BodyDef = box2dweb_4.default.Dynamics.b2BodyDef;
+            b2FixtureDef = box2dweb_4.default.Dynamics.b2FixtureDef;
+            b2Body = box2dweb_4.default.Dynamics.b2Body;
+            b2CircleShape = box2dweb_4.default.Collision.Shapes.b2CircleShape;
+            Planetoid = class Planetoid {
+                constructor(env, args) {
+                    this.env = env;
+                    this.body = env.physics.world.CreateBody((() => {
+                        var bodyDef = new b2BodyDef;
+                        bodyDef.type = b2Body.b2_dynamicBody;
+                        bodyDef.position.Set(args.position.x, args.position.y);
+                        bodyDef.linearVelocity.Set(args.linearVelocity.x, args.linearVelocity.y);
+                        bodyDef.angularVelocity = args.angularVelocity;
+                        bodyDef.angle = args.angle;
+                        return bodyDef;
+                    })());
+                    this.fixture = this.body.CreateFixture((() => {
+                        var fixDef = new b2FixtureDef;
+                        fixDef.density = args.density;
+                        fixDef.friction = 1.0;
+                        fixDef.restitution = .1;
+                        fixDef.shape = new b2CircleShape(args.radius);
+                        return fixDef;
+                    })());
+                    this.mesh = babylonjs_2.default.MeshBuilder.CreateSphere("", { segments: 4, diameter: args.radius * 2 }, this.env.graphics.scene);
+                    const m = new babylonjs_2.default.StandardMaterial("", env.graphics.scene);
+                    m.diffuseColor = new babylonjs_2.default.Color3(.5, .5, .5);
+                    this.mesh.material = m;
+                    this.mesh.outlineColor = new babylonjs_2.default.Color3(0, 0, 1);
+                    this.mesh.outlineWidth = .05;
+                    this.mesh.actionManager = new babylonjs_2.default.ActionManager(this.env.graphics.scene);
+                    this.mesh.actionManager.registerAction(new babylonjs_2.default.ExecuteCodeAction(babylonjs_2.default.ActionManager.OnPointerOverTrigger, evt => {
+                        this.mesh.renderOutline = true;
+                    }));
+                    this.mesh.actionManager.registerAction(new babylonjs_2.default.ExecuteCodeAction(babylonjs_2.default.ActionManager.OnPointerOutTrigger, evt => {
+                        this.mesh.renderOutline = false;
+                    }));
+                    this.mesh.actionManager.registerAction(new babylonjs_2.default.ExecuteCodeAction(babylonjs_2.default.ActionManager.OnPickTrigger, evt => {
+                        this.env.graphics.camera.lockedTarget = this.mesh;
+                    }));
+                    this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
+                    this.renderSubscription = env.renderEvent.subscribe(() => this.render());
+                }
+                update(dt) {
+                }
+                render() {
+                    this.mesh.position.x = this.body.GetPosition().x;
+                    this.mesh.position.z = this.body.GetPosition().y;
+                    this.mesh.rotation.y = this.body.GetAngle();
+                }
+            };
+            exports_7("Planetoid", Planetoid);
         }
     };
 });
@@ -320,7 +319,7 @@ System.register("Probe", ["box2dweb", "babylonjs"], function (exports_8, context
                     })());
                     this.fixture = this.body.CreateFixture((() => {
                         var fixDef = new b2FixtureDef;
-                        fixDef.density = 0.005;
+                        fixDef.density = args.density;
                         fixDef.friction = 1.0;
                         fixDef.restitution = .1;
                         fixDef.shape = new b2CircleShape(args.radius);
@@ -359,7 +358,8 @@ System.register("Probe", ["box2dweb", "babylonjs"], function (exports_8, context
                             angle: -this.body.GetAngle(),
                             angularVelocity: -this.body.GetAngularVelocity(),
                             radius: this.args.radius,
-                            color: this.args.color
+                            color: this.args.color,
+                            density: this.fixture.GetDensity()
                         });
                     }
                 }
@@ -373,66 +373,137 @@ System.register("Probe", ["box2dweb", "babylonjs"], function (exports_8, context
         }
     };
 });
-System.register("maps/map01", ["Earth", "Body", "Probe", "box2dweb", "babylonjs"], function (exports_9, context_9) {
+System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb", "babylonjs"], function (exports_9, context_9) {
     var __moduleName = context_9 && context_9.id;
+    function getRandomNorm() {
+        const a = Math.random() * 2 * Math.PI;
+        return new b2Vec2(Math.cos(a), -Math.sin(a));
+    }
+    function getRandomPolarVec2(minLength, maxLength) {
+        const vec = getRandomNorm();
+        vec.Multiply(minLength + Math.random() * (maxLength - minLength));
+        return vec;
+    }
+    function getOrbitalSpeed(thisPoisition, that, gravitationalConstant) {
+        const v = that.GetPosition().Copy();
+        v.Subtract(thisPoisition);
+        v.CrossFV(1);
+        const dstLen = v.Normalize();
+        v.Multiply(1 * Math.sqrt(gravitationalConstant * that.GetMass() / dstLen));
+        v.Add(that.GetLinearVelocity());
+        return v;
+    }
     function default_1(env) {
-        const earth = new Earth_1.Earth(env);
-        env.camera.target = earth.mesh;
-        const bodies = [];
-        for (var i = 0; i < 100; ++i) {
-            const d = (Math.random() - .5) * 100;
-            const a = Math.random() * 2 * Math.PI;
-            const position = new b2Vec2(Math.cos(a), -Math.sin(a));
-            position.Multiply(d);
-            position.Add(earth.body.GetPosition());
-            const linearVelocity = earth.body.GetPosition().Copy();
-            linearVelocity.SetV(earth.body.GetPosition());
-            linearVelocity.Subtract(position);
-            linearVelocity.CrossFV(1);
-            const dstLen = linearVelocity.Normalize();
-            linearVelocity.Multiply(1 * Math.sqrt(env.physics.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
-            // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
-            bodies.push(new Body_1.Body(env, {
+        const sol = new Star_1.Star(env, {
+            position: {
+                x: (Math.random() - 0.5) * 100,
+                y: (Math.random() - 0.5) * 100
+            },
+            linearVelocity: {
+                x: 50 * (Math.random() - 0.5),
+                y: 50 * (Math.random() - 0.5)
+            },
+            angle: Math.random() * 2 * Math.PI,
+            angularVelocity: 20 * (Math.random() - 0.5),
+            radius: 8 + Math.random() * 2,
+            density: 10
+        });
+        const asteroidBeltDist = 50 + Math.random() * 50;
+        const closePlanets = [];
+        const closePlanetsCount = 3 + Math.random() * 2;
+        for (let i = 0; i < closePlanetsCount; i++) {
+            const position = getRandomPolarVec2(30, asteroidBeltDist - 10);
+            position.Add(sol.body.GetPosition());
+            const planet = new Planetoid_1.Planetoid(env, {
                 position: position,
-                linearVelocity: linearVelocity,
+                linearVelocity: getOrbitalSpeed(position, sol.body, env.physics.gravity.gravitationalConstant),
                 angle: Math.random() * 2 * Math.PI,
                 angularVelocity: 20 * (Math.random() - 0.5),
-                radius: Math.random() * .5 + .1
-            }));
+                radius: 1 + Math.random() * 1,
+                density: 1
+            });
+            closePlanets.push(planet);
+            const moonCount = Math.random() * 3;
+            for (let j = 1; j < moonCount; j++) {
+                const position = getRandomPolarVec2(3, 15);
+                position.Add(planet.body.GetPosition());
+                const moon = new Planetoid_1.Planetoid(env, {
+                    position: position,
+                    linearVelocity: getOrbitalSpeed(position, planet.body, env.physics.gravity.gravitationalConstant),
+                    angle: Math.random() * 2 * Math.PI,
+                    angularVelocity: 20 * (Math.random() - 0.5),
+                    radius: .5 + Math.random() * .05,
+                    density: .1
+                });
+            }
         }
-        const probes = [];
-        for (var i = 0; i < 100; ++i) {
-            const d = (Math.random() - .5) * 100;
-            const a = Math.random() * 2 * Math.PI;
-            const position = new b2Vec2(Math.cos(a), -Math.sin(a));
-            position.Multiply(d);
-            position.Add(earth.body.GetPosition());
-            const linearVelocity = earth.body.GetPosition().Copy();
-            linearVelocity.SetV(earth.body.GetPosition());
-            linearVelocity.Subtract(position);
-            linearVelocity.CrossFV(1);
-            const dstLen = linearVelocity.Normalize();
-            linearVelocity.Multiply(1 * Math.sqrt(env.physics.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
-            // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
-            probes.push(new Probe_1.Probe(env, {
+        const asteroidCount = 100 + Math.random() * 30;
+        for (let i = 0; i < asteroidCount; i++) {
+            const position = getRandomPolarVec2(asteroidBeltDist * 0.95, asteroidBeltDist * 1.05);
+            position.Add(sol.body.GetPosition());
+            const asteroid = new Planetoid_1.Planetoid(env, {
                 position: position,
-                linearVelocity: linearVelocity,
+                linearVelocity: getOrbitalSpeed(position, sol.body, env.physics.gravity.gravitationalConstant),
                 angle: Math.random() * 2 * Math.PI,
                 angularVelocity: 20 * (Math.random() - 0.5),
-                radius: Math.random() * .5 + .1,
-                color: (Math.random() < .5) ? new babylonjs_4.default.Color3(1, 0, 0) : new babylonjs_4.default.Color3(0, 1, 0)
-            }));
+                radius: .3 + Math.random() * .2,
+                density: .5
+            });
         }
+        const outPlanets = [];
+        const outPlanetsCount = 4 + Math.random() * 3;
+        for (let i = 0; i < outPlanetsCount; i++) {
+            const position = getRandomPolarVec2(asteroidBeltDist + 30, 300);
+            position.Add(sol.body.GetPosition());
+            const planet = new Planetoid_1.Planetoid(env, {
+                position: position,
+                linearVelocity: getOrbitalSpeed(position, sol.body, env.physics.gravity.gravitationalConstant),
+                angle: Math.random() * 2 * Math.PI,
+                angularVelocity: 20 * (Math.random() - 0.5),
+                radius: 2 + Math.random() * 3,
+                density: 2
+            });
+            outPlanets.push(planet);
+            const moonCount = Math.random() * 10;
+            for (let j = 1; j < moonCount; j++) {
+                const position = getRandomPolarVec2(3, 15);
+                position.Add(planet.body.GetPosition());
+                const moon = new Planetoid_1.Planetoid(env, {
+                    position: position,
+                    linearVelocity: getOrbitalSpeed(position, planet.body, env.physics.gravity.gravitationalConstant),
+                    angle: Math.random() * 2 * Math.PI,
+                    angularVelocity: 20 * (Math.random() - 0.5),
+                    radius: .5 + Math.random() * .05,
+                    density: .1
+                });
+            }
+        }
+        const earth = closePlanets[Math.floor(Math.random() * closePlanets.length)];
+        const probeCount = Math.random() * 10 * 2;
+        for (let i = 1; i < probeCount; i++) {
+            const position = getRandomPolarVec2(1, 20);
+            position.Add(earth.body.GetPosition());
+            const moon = new Probe_1.Probe(env, {
+                position: position,
+                linearVelocity: getOrbitalSpeed(position, earth.body, env.physics.gravity.gravitationalConstant),
+                angle: Math.random() * 2 * Math.PI,
+                angularVelocity: 20 * (Math.random() - 0.5),
+                radius: .2 + Math.random() * .05,
+                color: i % 2 ? new babylonjs_4.default.Color3(1, 0, 0) : new babylonjs_4.default.Color3(0, 1, 0),
+                density: .005
+            });
+        }
+        env.graphics.camera.lockedTarget = earth.mesh;
     }
     exports_9("default", default_1);
-    var Earth_1, Body_1, Probe_1, box2dweb_6, b2Vec2, babylonjs_4;
+    var Star_1, Planetoid_1, Probe_1, box2dweb_6, b2Vec2, babylonjs_4;
     return {
         setters: [
-            function (Earth_1_1) {
-                Earth_1 = Earth_1_1;
+            function (Star_1_1) {
+                Star_1 = Star_1_1;
             },
-            function (Body_1_1) {
-                Body_1 = Body_1_1;
+            function (Planetoid_1_1) {
+                Planetoid_1 = Planetoid_1_1;
             },
             function (Probe_1_1) {
                 Probe_1 = Probe_1_1;
@@ -526,7 +597,7 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
                     this.graphics.scene = new babylonjs_5.default.Scene(this.graphics.engine);
                     const camera = new babylonjs_5.default.ArcRotateCamera('camera1', Math.PI / 2, 0, 100, new babylonjs_5.default.Vector3(0, 0, 0), this.graphics.scene);
                     camera.lowerRadiusLimit = 2;
-                    camera.upperRadiusLimit = 500;
+                    camera.upperRadiusLimit = 50000;
                     this.graphics.camera = camera;
                     this.graphics.camera.attachControl(this.canvas, false);
                     // this.graphics.camera.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
