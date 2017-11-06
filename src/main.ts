@@ -1,26 +1,15 @@
 import _ from "underscore";
+import Rx from 'rxjs/Rx';
 
 import { Physics } from "./physics/Physics";
 
 import Box2D from "box2dweb";
-
-import b2Vec2 = Box2D.Common.Math.b2Vec2;
-import b2World = Box2D.Dynamics.b2World;
 import b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
 
 import { FpsTracker } from "./FpsTracker";
 
 import PIXI from "pixi.js";
-
-import { Earth } from "./Earth";
-import { Body } from "./Body";
-import { Probe } from "./Probe";
-
-import Rx from 'rxjs/Rx';
-
 import { Camera } from "./Camera";
-import { timestamp } from "rxjs/operators";
-
 import { isVisible } from "./utils";
 
 class Enviornment {
@@ -57,168 +46,111 @@ class Enviornment {
     camera = new Camera(this);
 
     isPaused = false;
+
+    renderIterationEvent = new Rx.Subject<number>();
+    updateIterationEvent = Rx.Observable
+    .interval(0, Rx.Scheduler.asap)
+    .throttleTime(1000 / this.targetUps)
+    .scan((lastAnimationFrameRequest: number) => {
+        if (lastAnimationFrameRequest !== null) {
+            cancelAnimationFrame(lastAnimationFrameRequest);
+        }
+        return requestAnimationFrame(() => this.renderIterationEvent.next());
+    }, null);
+
+
+    constructor() {
+        _.bindAll(this, "adjustDisplay");
+
+        this.pauseButton.addEventListener("click", () => this.isPaused = !this.isPaused);
+        this.trackRotationButton.addEventListener("click", () => this.camera.trackRotation = !this.camera.trackRotation);
+        this.stepButton.addEventListener("click", () => this.update(1 / 60));
+        this.toggleGravityButton.addEventListener("click", () => this.physics.isGravityOn = !this.physics.isGravityOn);
+
+        window.addEventListener("resize", this.adjustDisplay);
+        this.adjustDisplay();
+
+        window.addEventListener("wheel", e => {
+            this.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
+        });
+
+        this.physics.world.SetDebugDraw((() => {
+            const debugDraw = new b2DebugDraw();
+            debugDraw.SetSprite(this.debugCtx);
+            debugDraw.SetFillAlpha(0.4);
+            debugDraw.SetLineThickness(.05);
+            debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+            //debugDraw.SetDrawScale(1/10);
+            return debugDraw;
+        })());
+    }
+
+
+    adjustDisplay() {
+        this.canvas.width = this.canvas.clientWidth;
+        this.canvas.height = this.canvas.clientHeight;
+    
+        this.stage.position.set(
+            this.canvas.width / 2, 
+            this.canvas.height / 2);
+    
+        if (this.canvasDebug) {
+            this.canvasDebug.width = this.canvasDebug.clientWidth;
+            this.canvasDebug.height = this.canvasDebug.clientHeight;
+    
+            this.debugCtx.setTransform(1, 0, 0, 1, this.canvasDebug.width / 2, this.canvasDebug.height / 2);
+        }
+    }
+
+    update(dt: number) {
+        this.physics.update(dt);
+        this.updateEvent.next(dt);
+    }
+
+    render(dt: number) {
+        this.renderEvent.next(dt);
+        
+        this.camera.render();
+        this.renderer.render(this.stage);
+        
+        if (this.canvasDebug && isVisible(this.canvasDebug)) {
+            this.debugCtx.save();
+            this.debugCtx.setTransform(1, 0, 0, 1, 0, 0);
+            this.debugCtx.clearRect(0, 0, this.debugCtx.canvas.width, this.debugCtx.canvas.height);
+            this.debugCtx.restore();
+            this.debugCtx.save();
+            this.camera.renderDebug();
+            this.physics.world.DrawDebugData();
+            this.debugCtx.restore();
+        }
+        
+        this.bodyCountLabel.innerText = `Bodies: ${this.physics.world.GetBodyCount()}`;
+        this.fpsLabel.innerText = `FPS ${this.fpsTracker.fps && this.fpsTracker.fps.toFixed(2)}`
+            + ` / UPS ${this.upsTracker.fps && this.upsTracker.fps.toFixed(2)}`;
+    }
+
+    run() {
+        this.renderIterationEvent
+        .timeInterval()
+        .do(v => this.fpsTracker.update(v.interval))
+        .subscribe(v => {
+            this.render(v.interval);
+        });
+    
+        this.updateIterationEvent
+        .timeInterval()
+        .do(v => this.upsTracker.update(v.interval))
+        .subscribe(v => {
+            if (!this.isPaused) {
+                this.update(1 / this.targetUps)
+            }
+        });
+    }
 }
 
 const env = new Enviornment();
 
-env.pauseButton.addEventListener("click", () => env.isPaused = !env.isPaused);
-env.trackRotationButton.addEventListener("click", () => env.camera.trackRotation = !env.camera.trackRotation);
-env.stepButton.addEventListener("click", () => update(1 / 60));
-env.toggleGravityButton.addEventListener("click", () => env.physics.isGravityOn = !env.physics.isGravityOn);
+import map from "./maps/map01";
+map(env);
 
-window.addEventListener("wheel", e => {
-    env.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
-});
-
-function adjustDisplay() {
-    env.canvas.width = env.canvas.clientWidth;
-    env.canvas.height = env.canvas.clientHeight;
-
-    env.stage.position.set(
-        env.canvas.width / 2, 
-        env.canvas.height / 2);
-
-    if (env.canvasDebug) {
-        env.canvasDebug.width = env.canvasDebug.clientWidth;
-        env.canvasDebug.height = env.canvasDebug.clientHeight;
-
-        env.debugCtx.setTransform(1, 0, 0, 1, env.canvasDebug.width / 2, env.canvasDebug.height / 2);
-    }
-}
-
-window.addEventListener("resize", adjustDisplay);
-adjustDisplay();
-
-
-
-const earth = new Earth(env);
-env.camera.target = earth.sprite;
-
-const bodies: Body[] = [];
-for(var i = 0; i < 100; ++i) {
-    const d = (Math.random() - .5) * 100;
-    const a = Math.random() * 2 * Math.PI;
-    const position = new b2Vec2(Math.cos(a), -Math.sin(a));
-    position.Multiply(d);
-    position.Add(earth.body.GetPosition());
-    
-    
-    const linearVelocity = earth.body.GetPosition().Copy();
-    linearVelocity.SetV(earth.body.GetPosition());
-    linearVelocity.Subtract(position);
-    linearVelocity.CrossFV(1);
-    const dstLen = linearVelocity.Normalize();
-    linearVelocity.Multiply(1 * Math.sqrt(env.physics.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
-    // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
-
-
-    bodies.push(new Body(env, {
-        position: position,
-        linearVelocity: linearVelocity,
-        angle: Math.random() * 2 * Math.PI,
-        angularVelocity: 20 * (Math.random() - 0.5),
-        radius: Math.random() * .5 + .1
-    }));
-}
-
-const probes: Probe[] = [];
-for(var i = 0; i < 100; ++i) {
-    const d = (Math.random() - .5) * 100;
-    const a = Math.random() * 2 * Math.PI;
-    const position = new b2Vec2(Math.cos(a), -Math.sin(a));
-    position.Multiply(d);
-    position.Add(earth.body.GetPosition());
-    
-    
-    const linearVelocity = earth.body.GetPosition().Copy();
-    linearVelocity.SetV(earth.body.GetPosition());
-    linearVelocity.Subtract(position);
-    linearVelocity.CrossFV(1);
-    const dstLen = linearVelocity.Normalize();
-    linearVelocity.Multiply(1 * Math.sqrt(env.physics.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
-    // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
-
-
-    probes.push(new Probe(env, {
-        position: position,
-        linearVelocity: linearVelocity,
-        angle: Math.random() * 2 * Math.PI,
-        angularVelocity: 20 * (Math.random() - 0.5),
-        radius: Math.random() * .5 + .1,
-        color: (Math.random() < .5) ? 0xff0000 : 0x00ff00
-    }));
-}
-
-
-
-env.physics.world.SetDebugDraw((() => {
-    const debugDraw = new b2DebugDraw();
-    debugDraw.SetSprite(env.debugCtx);
-    debugDraw.SetFillAlpha(0.4);
-    debugDraw.SetLineThickness(.05);
-    debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
-    //debugDraw.SetDrawScale(1/10);
-    return debugDraw;
-})());
-
-
-
-
-
-
-function update(dt: number) {
-    env.physics.update(dt);
-    env.updateEvent.next(dt);
-}
-
-
-const renderIterationEvent = new Rx.Subject<number>();
-const updateIterationEvent = Rx.Observable
-.interval(0, Rx.Scheduler.asap)
-.throttleTime(1000 / env.targetUps)
-.scan((lastAnimationFrameRequest: number) => {
-    if (lastAnimationFrameRequest !== null) {
-        cancelAnimationFrame(lastAnimationFrameRequest);
-    }
-    return requestAnimationFrame(() => renderIterationEvent.next());
-}, null);
-
-
-
-function run() {
-    renderIterationEvent
-    .timeInterval()
-    .do(v => env.fpsTracker.update(v.interval))
-    .subscribe(v => {
-        env.renderEvent.next(v.interval);
-    
-        env.camera.render();
-        env.renderer.render(env.stage);
-        
-        if (env.canvasDebug && isVisible(env.canvasDebug)) {
-            env.debugCtx.save();
-            env.debugCtx.setTransform(1, 0, 0, 1, 0, 0);
-            env.debugCtx.clearRect(0, 0, env.debugCtx.canvas.width, env.debugCtx.canvas.height);
-            env.debugCtx.restore();
-            env.debugCtx.save();
-            env.camera.renderDebug();
-            env.physics.world.DrawDebugData();
-            env.debugCtx.restore();
-        }
-        
-        env.bodyCountLabel.innerText = `Bodies: ${env.physics.world.GetBodyCount()}`;
-        env.fpsLabel.innerText = `FPS ${env.fpsTracker.fps && env.fpsTracker.fps.toFixed(2)}`
-            + ` / UPS ${env.upsTracker.fps && env.upsTracker.fps.toFixed(2)}`;
-    });
-
-    updateIterationEvent
-    .timeInterval()
-    .do(v => env.upsTracker.update(v.interval))
-    .subscribe(v => {
-        if (!env.isPaused) {
-            update(1 / env.targetUps)
-        }
-    });
-}
-
-run();
+env.run();
