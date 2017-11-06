@@ -11,13 +11,13 @@ System.register("Camera", [], function (exports_1, context_1) {
                     this.trackRotation = false;
                 }
                 render() {
-                    if (this.trackRotation && this.target) {
-                        this.env.stage.rotation = -this.target.rotation;
-                    }
-                    this.env.stage.scale.set(this.scale, this.scale);
-                    if (this.target) {
-                        this.env.stage.pivot.set(this.target.position.x, this.target.position.y);
-                    }
+                    // if (this.trackRotation && this.target) {
+                    //     this.env.stage.rotation = -this.target.rotation;
+                    // }
+                    // this.env.stage.scale.set(this.scale, this.scale);
+                    // if (this.target) {
+                    //     this.env.stage.pivot.set(this.target.position.x, this.target.position.y);
+                    // }
                 }
                 renderDebug() {
                     if (this.trackRotation && this.target) {
@@ -33,16 +33,16 @@ System.register("Camera", [], function (exports_1, context_1) {
         }
     };
 });
-System.register("Body", ["pixi.js", "box2dweb"], function (exports_2, context_2) {
+System.register("Body", ["box2dweb", "babylonjs"], function (exports_2, context_2) {
     var __moduleName = context_2 && context_2.id;
-    var PIXI, box2dweb_1, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Body;
+    var box2dweb_1, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, babylonjs_1, Body;
     return {
         setters: [
-            function (PIXI_1) {
-                PIXI = PIXI_1;
-            },
             function (box2dweb_1_1) {
                 box2dweb_1 = box2dweb_1_1;
+            },
+            function (babylonjs_1_1) {
+                babylonjs_1 = babylonjs_1_1;
             }
         ],
         execute: function () {
@@ -70,53 +70,40 @@ System.register("Body", ["pixi.js", "box2dweb"], function (exports_2, context_2)
                         fixDef.shape = new b2CircleShape(args.radius);
                         return fixDef;
                     })());
-                    this.sprite = new PIXI.Sprite(Body.createSpriteTexture(env.renderer, args.radius * this.env.pixelsPerMeter));
-                    this.sprite.anchor.set(.5, .5);
-                    this.sprite.interactive = true;
-                    this.sprite.hitArea = new PIXI.Circle(0, 0, args.radius * this.env.pixelsPerMeter);
-                    this.sprite.on("click", () => env.camera.target = this.sprite);
-                    this.sprite.on("mouseover", () => this.sprite.tint = 0xa0a0a0);
-                    this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
-                    env.stage.addChild(this.sprite);
+                    this.mesh = babylonjs_1.default.MeshBuilder.CreateSphere("", { segments: 16, diameter: args.radius * 2 }, this.env.graphics.scene);
+                    const m = new babylonjs_1.default.StandardMaterial("", env.graphics.scene);
+                    m.diffuseColor = new babylonjs_1.default.Color3(.5, .5, .5);
+                    this.mesh.material = m;
+                    // this.sprite.interactive = true;
+                    // this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
+                    // this.sprite.on("click", () => env.camera.target = this.sprite);
+                    // this.sprite.on("mouseover", () => this.sprite.tint = 0xa0a0a0);
+                    // this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
                     this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
                     this.renderSubscription = env.renderEvent.subscribe(() => this.render());
                 }
-                static createSpriteTexture(renderer, radius) {
-                    const g = new PIXI.Graphics();
-                    g.boundsPadding = 1;
-                    g.beginFill(0xb4b4b4, .4);
-                    g.lineStyle(1, 0xb4b4b4);
-                    const cx = renderer instanceof PIXI.WebGLRenderer ? 0 : radius + g.boundsPadding;
-                    const cy = renderer instanceof PIXI.WebGLRenderer ? 0 : radius + g.boundsPadding;
-                    g.drawCircle(cx, cy, radius);
-                    g.endFill();
-                    g.moveTo(cx, cy);
-                    g.lineTo(cx + radius, cy);
-                    return renderer.generateTexture(g, 1, 5);
-                }
-                ;
                 update(dt) {
                 }
                 render() {
-                    this.sprite.x = this.body.GetPosition().x * this.env.pixelsPerMeter;
-                    this.sprite.y = this.body.GetPosition().y * this.env.pixelsPerMeter;
-                    this.sprite.rotation = this.body.GetAngle();
+                    this.mesh.position.x = this.body.GetPosition().x;
+                    this.mesh.position.y = this.body.GetPosition().y;
+                    this.mesh.rotation.z = this.body.GetAngle();
                 }
             };
             exports_2("Body", Body);
         }
     };
 });
-System.register("Earth", ["pixi.js", "box2dweb"], function (exports_3, context_3) {
+System.register("Earth", ["box2dweb", "babylonjs"], function (exports_3, context_3) {
     var __moduleName = context_3 && context_3.id;
-    var PIXI, box2dweb_2, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Earth;
+    var box2dweb_2, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, babylonjs_2, Earth;
     return {
         setters: [
-            function (PIXI_2) {
-                PIXI = PIXI_2;
-            },
             function (box2dweb_2_1) {
                 box2dweb_2 = box2dweb_2_1;
+            },
+            function (babylonjs_2_1) {
+                babylonjs_2 = babylonjs_2_1;
             }
         ],
         execute: function () {
@@ -127,6 +114,7 @@ System.register("Earth", ["pixi.js", "box2dweb"], function (exports_3, context_3
             Earth = class Earth {
                 constructor(env) {
                     this.env = env;
+                    const radius = 1;
                     this.body = env.physics.world.CreateBody((() => {
                         var bodyDef = new b2BodyDef;
                         bodyDef.type = b2Body.b2_dynamicBody;
@@ -144,37 +132,27 @@ System.register("Earth", ["pixi.js", "box2dweb"], function (exports_3, context_3
                         fixDef.shape = new b2CircleShape(1);
                         return fixDef;
                     })());
-                    this.sprite = new PIXI.Sprite(Earth.createSpriteTexture(env.renderer, 1 * this.env.pixelsPerMeter));
-                    this.sprite.anchor.set(.5, .5);
-                    this.sprite.interactive = true;
-                    this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
-                    this.sprite.on("click", () => env.camera.target = this.sprite);
-                    this.sprite.on("mouseover", () => this.sprite.tint = 0xa0a0a0);
-                    this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
-                    env.stage.addChild(this.sprite);
+                    this.mesh = babylonjs_2.default.MeshBuilder.CreateSphere("", { segments: 16, diameter: radius * 2 }, this.env.graphics.scene);
+                    const m = new babylonjs_2.default.StandardMaterial("", env.graphics.scene);
+                    m.emissiveColor = new babylonjs_2.default.Color3(1, 1, 1);
+                    this.mesh.material = m;
+                    this.light = new babylonjs_2.default.PointLight("", new babylonjs_2.default.Vector3(0, 0, 0), this.env.graphics.scene);
+                    // this.sprite.interactive = true;
+                    // this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
+                    // this.sprite.on("click", () => env.camera.target = this.sprite);
+                    // this.sprite.on("mouseover", () => this.sprite.tint = 0xa0a0a0);
+                    // this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
                     this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
                     this.renderSubscription = env.renderEvent.subscribe(() => this.render());
                 }
-                static createSpriteTexture(renderer, radius) {
-                    const g = new PIXI.Graphics();
-                    g.boundsPadding = 1;
-                    g.beginFill(0xe6e6e6, .4);
-                    g.lineStyle(1, 0xe6e6e6);
-                    const cx = renderer instanceof PIXI.WebGLRenderer ? 0 : radius + g.boundsPadding;
-                    const cy = renderer instanceof PIXI.WebGLRenderer ? 0 : radius + g.boundsPadding;
-                    g.drawCircle(cx, cy, radius);
-                    g.endFill();
-                    g.moveTo(cx, cy);
-                    g.lineTo(cx + radius, cy);
-                    return renderer.generateTexture(g, 1, 5);
-                }
-                ;
                 update(dt) {
                 }
                 render() {
-                    this.sprite.x = this.body.GetPosition().x * this.env.pixelsPerMeter;
-                    this.sprite.y = this.body.GetPosition().y * this.env.pixelsPerMeter;
-                    this.sprite.rotation = this.body.GetAngle();
+                    this.mesh.position.x = this.body.GetPosition().x;
+                    this.mesh.position.y = this.body.GetPosition().y;
+                    this.mesh.rotation.z = this.body.GetAngle();
+                    this.light.position.x = this.body.GetPosition().x;
+                    this.light.position.y = this.body.GetPosition().y;
                 }
             };
             exports_3("Earth", Earth);
@@ -279,16 +257,33 @@ System.register("physics/Physics", ["box2dweb", "physics/Gravity"], function (ex
         }
     };
 });
-System.register("Probe", ["pixi.js", "box2dweb"], function (exports_7, context_7) {
+System.register("utils", [], function (exports_7, context_7) {
     var __moduleName = context_7 && context_7.id;
-    var PIXI, box2dweb_5, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Probe;
+    function isVisible(elt) {
+        var style = window.getComputedStyle(elt);
+        return +style.width !== 0
+            && +style.height !== 0
+            && +style.opacity !== 0
+            && style.display !== 'none'
+            && style.visibility !== 'hidden';
+    }
+    exports_7("isVisible", isVisible);
+    return {
+        setters: [],
+        execute: function () {
+        }
+    };
+});
+System.register("Probe", ["box2dweb", "babylonjs"], function (exports_8, context_8) {
+    var __moduleName = context_8 && context_8.id;
+    var box2dweb_5, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, babylonjs_3, Probe;
     return {
         setters: [
-            function (PIXI_3) {
-                PIXI = PIXI_3;
-            },
             function (box2dweb_5_1) {
                 box2dweb_5 = box2dweb_5_1;
+            },
+            function (babylonjs_3_1) {
+                babylonjs_3 = babylonjs_3_1;
             }
         ],
         execute: function () {
@@ -317,31 +312,18 @@ System.register("Probe", ["pixi.js", "box2dweb"], function (exports_7, context_7
                         fixDef.shape = new b2CircleShape(args.radius);
                         return fixDef;
                     })());
-                    this.sprite = new PIXI.Sprite(Probe.createSpriteTexture(env.renderer, args.radius * this.env.pixelsPerMeter, args.color));
-                    this.sprite.anchor.set(.5, .5);
-                    this.sprite.interactive = true;
-                    this.sprite.hitArea = new PIXI.Circle(0, 0, args.radius * this.env.pixelsPerMeter);
-                    this.sprite.on("click", () => env.camera.target = this.sprite);
-                    this.sprite.on("mouseover", () => this.sprite.tint = 0xa0a0a0);
-                    this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
-                    env.stage.addChild(this.sprite);
+                    this.mesh = babylonjs_3.default.MeshBuilder.CreateSphere("", { segments: 16, diameter: args.radius * 2 }, this.env.graphics.scene);
+                    const m = new babylonjs_3.default.StandardMaterial("", env.graphics.scene);
+                    m.diffuseColor = args.color;
+                    this.mesh.material = m;
+                    // this.sprite.interactive = true;
+                    // this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
+                    // this.sprite.on("click", () => env.camera.target = this.sprite);
+                    // this.sprite.on("mouseover", () => this.sprite.tint = 0xa0a0a0);
+                    // this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
                     this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
                     this.renderSubscription = env.renderEvent.subscribe(() => this.render());
                 }
-                static createSpriteTexture(renderer, radius, color) {
-                    const g = new PIXI.Graphics();
-                    g.boundsPadding = 1;
-                    g.beginFill(color, .4);
-                    g.lineStyle(1, color);
-                    const cx = renderer instanceof PIXI.WebGLRenderer ? 0 : radius + g.boundsPadding;
-                    const cy = renderer instanceof PIXI.WebGLRenderer ? 0 : radius + g.boundsPadding;
-                    g.drawCircle(cx, cy, radius);
-                    g.endFill();
-                    g.moveTo(cx, cy);
-                    g.lineTo(cx + radius, cy);
-                    return renderer.generateTexture(g, 1, 5);
-                }
-                ;
                 update(dt) {
                     if (Math.random() < .001) {
                         new Probe(this.env, {
@@ -361,94 +343,70 @@ System.register("Probe", ["pixi.js", "box2dweb"], function (exports_7, context_7
                     }
                 }
                 render() {
-                    this.sprite.x = this.body.GetPosition().x * this.env.pixelsPerMeter;
-                    this.sprite.y = this.body.GetPosition().y * this.env.pixelsPerMeter;
-                    this.sprite.rotation = this.body.GetAngle();
+                    this.mesh.position.x = this.body.GetPosition().x;
+                    this.mesh.position.y = this.body.GetPosition().y;
+                    this.mesh.rotation.z = this.body.GetAngle();
                 }
             };
-            exports_7("Probe", Probe);
+            exports_8("Probe", Probe);
         }
     };
 });
-System.register("utils", [], function (exports_8, context_8) {
-    var __moduleName = context_8 && context_8.id;
-    function isVisible(elt) {
-        var style = window.getComputedStyle(elt);
-        return +style.width !== 0
-            && +style.height !== 0
-            && +style.opacity !== 0
-            && style.display !== 'none'
-            && style.visibility !== 'hidden';
-    }
-    exports_8("isVisible", isVisible);
-    return {
-        setters: [],
-        execute: function () {
-        }
-    };
-});
-System.register("main", ["physics/Physics", "box2dweb", "FpsTracker", "pixi.js", "Earth", "Body", "Probe", "rxjs/Rx", "Camera", "utils"], function (exports_9, context_9) {
+System.register("maps/map01", ["Earth", "Body", "Probe", "box2dweb", "babylonjs"], function (exports_9, context_9) {
     var __moduleName = context_9 && context_9.id;
-    function adjustDisplay() {
-        env.canvas.width = env.canvas.clientWidth;
-        env.canvas.height = env.canvas.clientHeight;
-        env.stage.position.set(env.canvas.width / 2, env.canvas.height / 2);
-        if (env.canvasDebug) {
-            env.canvasDebug.width = env.canvasDebug.clientWidth;
-            env.canvasDebug.height = env.canvasDebug.clientHeight;
-            env.debugCtx.setTransform(1, 0, 0, 1, env.canvasDebug.width / 2, env.canvasDebug.height / 2);
+    function default_1(env) {
+        const earth = new Earth_1.Earth(env);
+        env.camera.target = earth.mesh;
+        const bodies = [];
+        for (var i = 0; i < 100; ++i) {
+            const d = (Math.random() - .5) * 100;
+            const a = Math.random() * 2 * Math.PI;
+            const position = new b2Vec2(Math.cos(a), -Math.sin(a));
+            position.Multiply(d);
+            position.Add(earth.body.GetPosition());
+            const linearVelocity = earth.body.GetPosition().Copy();
+            linearVelocity.SetV(earth.body.GetPosition());
+            linearVelocity.Subtract(position);
+            linearVelocity.CrossFV(1);
+            const dstLen = linearVelocity.Normalize();
+            linearVelocity.Multiply(1 * Math.sqrt(env.physics.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
+            // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
+            bodies.push(new Body_1.Body(env, {
+                position: position,
+                linearVelocity: linearVelocity,
+                angle: Math.random() * 2 * Math.PI,
+                angularVelocity: 20 * (Math.random() - 0.5),
+                radius: Math.random() * .5 + .1
+            }));
+        }
+        const probes = [];
+        for (var i = 0; i < 100; ++i) {
+            const d = (Math.random() - .5) * 100;
+            const a = Math.random() * 2 * Math.PI;
+            const position = new b2Vec2(Math.cos(a), -Math.sin(a));
+            position.Multiply(d);
+            position.Add(earth.body.GetPosition());
+            const linearVelocity = earth.body.GetPosition().Copy();
+            linearVelocity.SetV(earth.body.GetPosition());
+            linearVelocity.Subtract(position);
+            linearVelocity.CrossFV(1);
+            const dstLen = linearVelocity.Normalize();
+            linearVelocity.Multiply(1 * Math.sqrt(env.physics.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
+            // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
+            probes.push(new Probe_1.Probe(env, {
+                position: position,
+                linearVelocity: linearVelocity,
+                angle: Math.random() * 2 * Math.PI,
+                angularVelocity: 20 * (Math.random() - 0.5),
+                radius: Math.random() * .5 + .1,
+                color: (Math.random() < .5) ? new babylonjs_4.default.Color3(1, 0, 0) : new babylonjs_4.default.Color3(0, 1, 0)
+            }));
         }
     }
-    function update(dt) {
-        env.physics.update(dt);
-        env.updateEvent.next(dt);
-    }
-    function run() {
-        renderIterationEvent
-            .timeInterval()
-            .do(v => env.fpsTracker.update(v.interval))
-            .subscribe(v => {
-            env.renderEvent.next(v.interval);
-            env.camera.render();
-            env.renderer.render(env.stage);
-            if (env.canvasDebug && utils_1.isVisible(env.canvasDebug)) {
-                env.debugCtx.save();
-                env.debugCtx.setTransform(1, 0, 0, 1, 0, 0);
-                env.debugCtx.clearRect(0, 0, env.debugCtx.canvas.width, env.debugCtx.canvas.height);
-                env.debugCtx.restore();
-                env.debugCtx.save();
-                env.camera.renderDebug();
-                env.physics.world.DrawDebugData();
-                env.debugCtx.restore();
-            }
-            env.bodyCountLabel.innerText = `Bodies: ${env.physics.world.GetBodyCount()}`;
-            env.fpsLabel.innerText = `FPS ${env.fpsTracker.fps && env.fpsTracker.fps.toFixed(2)}`
-                + ` / UPS ${env.upsTracker.fps && env.upsTracker.fps.toFixed(2)}`;
-        });
-        updateIterationEvent
-            .timeInterval()
-            .do(v => env.upsTracker.update(v.interval))
-            .subscribe(v => {
-            if (!env.isPaused) {
-                update(1 / env.targetUps);
-            }
-        });
-    }
-    var Physics_1, box2dweb_6, b2Vec2, b2DebugDraw, FpsTracker_1, pixi_js_1, Earth_1, Body_1, Probe_1, Rx_1, Camera_1, utils_1, Enviornment, env, earth, bodies, i, probes, i, renderIterationEvent, updateIterationEvent;
+    exports_9("default", default_1);
+    var Earth_1, Body_1, Probe_1, box2dweb_6, b2Vec2, babylonjs_4;
     return {
         setters: [
-            function (Physics_1_1) {
-                Physics_1 = Physics_1_1;
-            },
-            function (box2dweb_6_1) {
-                box2dweb_6 = box2dweb_6_1;
-            },
-            function (FpsTracker_1_1) {
-                FpsTracker_1 = FpsTracker_1_1;
-            },
-            function (pixi_js_1_1) {
-                pixi_js_1 = pixi_js_1_1;
-            },
             function (Earth_1_1) {
                 Earth_1 = Earth_1_1;
             },
@@ -458,19 +416,53 @@ System.register("main", ["physics/Physics", "box2dweb", "FpsTracker", "pixi.js",
             function (Probe_1_1) {
                 Probe_1 = Probe_1_1;
             },
+            function (box2dweb_6_1) {
+                box2dweb_6 = box2dweb_6_1;
+            },
+            function (babylonjs_4_1) {
+                babylonjs_4 = babylonjs_4_1;
+            }
+        ],
+        execute: function () {
+            b2Vec2 = box2dweb_6.default.Common.Math.b2Vec2;
+        }
+    };
+});
+System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb", "FpsTracker", "babylonjs", "Camera", "utils", "maps/map01"], function (exports_10, context_10) {
+    var __moduleName = context_10 && context_10.id;
+    var underscore_1, Rx_1, Physics_1, box2dweb_7, b2DebugDraw, FpsTracker_1, babylonjs_5, Camera_1, utils_1, Enviornment, env, map01_1;
+    return {
+        setters: [
+            function (underscore_1_1) {
+                underscore_1 = underscore_1_1;
+            },
             function (Rx_1_1) {
                 Rx_1 = Rx_1_1;
+            },
+            function (Physics_1_1) {
+                Physics_1 = Physics_1_1;
+            },
+            function (box2dweb_7_1) {
+                box2dweb_7 = box2dweb_7_1;
+            },
+            function (FpsTracker_1_1) {
+                FpsTracker_1 = FpsTracker_1_1;
+            },
+            function (babylonjs_5_1) {
+                babylonjs_5 = babylonjs_5_1;
             },
             function (Camera_1_1) {
                 Camera_1 = Camera_1_1;
             },
             function (utils_1_1) {
                 utils_1 = utils_1_1;
+            },
+            function (map01_1_1) {
+                map01_1 = map01_1_1;
             }
         ],
         execute: function () {
-            b2Vec2 = box2dweb_6.default.Common.Math.b2Vec2;
-            b2DebugDraw = box2dweb_6.default.Dynamics.b2DebugDraw;
+            b2DebugDraw = box2dweb_7.default.Dynamics.b2DebugDraw;
             Enviornment = class Enviornment {
                 constructor() {
                     this.physics = new Physics_1.Physics();
@@ -481,100 +473,114 @@ System.register("main", ["physics/Physics", "box2dweb", "FpsTracker", "pixi.js",
                     this.canvas = document.getElementById("canvas");
                     this.canvasDebug = document.getElementById("canvas-debug");
                     this.debugCtx = this.canvasDebug.getContext("2d");
-                    this.renderer = pixi_js_1.default.autoDetectRenderer(this.canvas.clientWidth, this.canvas.clientHeight, {
-                        view: this.canvas,
-                        antialias: true
-                    });
-                    this.stage = new pixi_js_1.default.Container();
                     this.fpsLabel = document.getElementById("fps-label");
                     this.bodyCountLabel = document.getElementById("body-count-label");
                     this.pauseButton = document.getElementById("pause-button");
                     this.trackRotationButton = document.getElementById("track-rotation-button");
                     this.stepButton = document.getElementById("step-button");
                     this.toggleGravityButton = document.getElementById("toggle-gravity-button");
+                    this.graphics = {
+                        engine: null,
+                        scene: null,
+                        camera: null
+                    };
                     this.updateEvent = new Rx_1.default.Subject();
                     this.renderEvent = new Rx_1.default.Subject();
                     this.camera = new Camera_1.Camera(this);
                     this.isPaused = false;
+                    this.renderIterationEvent = new Rx_1.default.Subject();
+                    this.updateIterationEvent = Rx_1.default.Observable
+                        .interval(0, Rx_1.default.Scheduler.asap)
+                        .throttleTime(1000 / this.targetUps)
+                        .scan((lastAnimationFrameRequest) => {
+                        if (lastAnimationFrameRequest !== null) {
+                            cancelAnimationFrame(lastAnimationFrameRequest);
+                        }
+                        return requestAnimationFrame(() => this.renderIterationEvent.next());
+                    }, null);
+                    underscore_1.default.bindAll(this, "adjustDisplay");
+                    this.graphics.engine = new babylonjs_5.default.Engine(this.canvas, true);
+                    this.pauseButton.addEventListener("click", () => this.isPaused = !this.isPaused);
+                    this.trackRotationButton.addEventListener("click", () => this.camera.trackRotation = !this.camera.trackRotation);
+                    this.stepButton.addEventListener("click", () => this.update(1 / 60));
+                    this.toggleGravityButton.addEventListener("click", () => this.physics.isGravityOn = !this.physics.isGravityOn);
+                    window.addEventListener("resize", this.adjustDisplay);
+                    this.adjustDisplay();
+                    window.addEventListener("wheel", e => {
+                        this.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
+                    });
+                    this.physics.world.SetDebugDraw((() => {
+                        const debugDraw = new b2DebugDraw();
+                        debugDraw.SetSprite(this.debugCtx);
+                        debugDraw.SetFillAlpha(0.4);
+                        debugDraw.SetLineThickness(.05);
+                        debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
+                        //debugDraw.SetDrawScale(1/10);
+                        return debugDraw;
+                    })());
+                    this.createScene();
+                }
+                createScene() {
+                    this.graphics.scene = new babylonjs_5.default.Scene(this.graphics.engine);
+                    this.graphics.camera = new babylonjs_5.default.FreeCamera('camera1', new babylonjs_5.default.Vector3(0, 0, -10), this.graphics.scene);
+                    this.graphics.camera.setTarget(babylonjs_5.default.Vector3.Zero());
+                    this.graphics.camera.attachControl(this.canvas, false);
+                }
+                adjustDisplay() {
+                    this.canvas.width = this.canvas.clientWidth;
+                    this.canvas.height = this.canvas.clientHeight;
+                    this.graphics.engine.resize();
+                    if (this.canvasDebug) {
+                        this.canvasDebug.width = this.canvasDebug.clientWidth;
+                        this.canvasDebug.height = this.canvasDebug.clientHeight;
+                        this.debugCtx.setTransform(1, 0, 0, 1, this.canvasDebug.width / 2, this.canvasDebug.height / 2);
+                    }
+                }
+                update(dt) {
+                    this.physics.update(dt);
+                    this.updateEvent.next(dt);
+                }
+                render(dt) {
+                    this.renderEvent.next(dt);
+                    this.camera.render();
+                    this.graphics.scene.render();
+                    if (this.canvasDebug && utils_1.isVisible(this.canvasDebug)) {
+                        this.debugCtx.save();
+                        this.debugCtx.setTransform(1, 0, 0, 1, 0, 0);
+                        this.debugCtx.clearRect(0, 0, this.debugCtx.canvas.width, this.debugCtx.canvas.height);
+                        this.debugCtx.restore();
+                        this.debugCtx.save();
+                        this.camera.renderDebug();
+                        this.physics.world.DrawDebugData();
+                        this.debugCtx.restore();
+                    }
+                    this.bodyCountLabel.innerText = `Bodies: ${this.physics.world.GetBodyCount()}`;
+                    this.fpsLabel.innerText = `FPS ${this.fpsTracker.fps && this.fpsTracker.fps.toFixed(2)}`
+                        + ` / UPS ${this.upsTracker.fps && this.upsTracker.fps.toFixed(2)}`;
+                }
+                run() {
+                    this.renderIterationEvent
+                        .timeInterval()
+                        .do(v => this.fpsTracker.update(v.interval))
+                        .subscribe(v => {
+                        this.render(v.interval);
+                    });
+                    this.updateIterationEvent
+                        .timeInterval()
+                        .do(v => this.upsTracker.update(v.interval))
+                        .subscribe(v => {
+                        if (!this.isPaused) {
+                            this.update(1 / this.targetUps);
+                        }
+                    });
+                    // this.graphics.engine.runRenderLoop(() => {
+                    //     this.graphics.scene.render();
+                    // });
                 }
             };
             env = new Enviornment();
-            env.pauseButton.addEventListener("click", () => env.isPaused = !env.isPaused);
-            env.trackRotationButton.addEventListener("click", () => env.camera.trackRotation = !env.camera.trackRotation);
-            env.stepButton.addEventListener("click", () => update(1 / 60));
-            env.toggleGravityButton.addEventListener("click", () => env.physics.isGravityOn = !env.physics.isGravityOn);
-            window.addEventListener("wheel", e => {
-                env.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
-            });
-            window.addEventListener("resize", adjustDisplay);
-            adjustDisplay();
-            earth = new Earth_1.Earth(env);
-            env.camera.target = earth.sprite;
-            bodies = [];
-            for (i = 0; i < 100; ++i) {
-                const d = (Math.random() - .5) * 100;
-                const a = Math.random() * 2 * Math.PI;
-                const position = new b2Vec2(Math.cos(a), -Math.sin(a));
-                position.Multiply(d);
-                position.Add(earth.body.GetPosition());
-                const linearVelocity = earth.body.GetPosition().Copy();
-                linearVelocity.SetV(earth.body.GetPosition());
-                linearVelocity.Subtract(position);
-                linearVelocity.CrossFV(1);
-                const dstLen = linearVelocity.Normalize();
-                linearVelocity.Multiply(1 * Math.sqrt(env.physics.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
-                // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
-                bodies.push(new Body_1.Body(env, {
-                    position: position,
-                    linearVelocity: linearVelocity,
-                    angle: Math.random() * 2 * Math.PI,
-                    angularVelocity: 20 * (Math.random() - 0.5),
-                    radius: Math.random() * .5 + .1
-                }));
-            }
-            probes = [];
-            for (i = 0; i < 100; ++i) {
-                const d = (Math.random() - .5) * 100;
-                const a = Math.random() * 2 * Math.PI;
-                const position = new b2Vec2(Math.cos(a), -Math.sin(a));
-                position.Multiply(d);
-                position.Add(earth.body.GetPosition());
-                const linearVelocity = earth.body.GetPosition().Copy();
-                linearVelocity.SetV(earth.body.GetPosition());
-                linearVelocity.Subtract(position);
-                linearVelocity.CrossFV(1);
-                const dstLen = linearVelocity.Normalize();
-                linearVelocity.Multiply(1 * Math.sqrt(env.physics.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
-                // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
-                probes.push(new Probe_1.Probe(env, {
-                    position: position,
-                    linearVelocity: linearVelocity,
-                    angle: Math.random() * 2 * Math.PI,
-                    angularVelocity: 20 * (Math.random() - 0.5),
-                    radius: Math.random() * .5 + .1,
-                    color: (Math.random() < .5) ? 0xff0000 : 0x00ff00
-                }));
-            }
-            env.physics.world.SetDebugDraw((() => {
-                const debugDraw = new b2DebugDraw();
-                debugDraw.SetSprite(env.debugCtx);
-                debugDraw.SetFillAlpha(0.4);
-                debugDraw.SetLineThickness(.05);
-                debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
-                //debugDraw.SetDrawScale(1/10);
-                return debugDraw;
-            })());
-            renderIterationEvent = new Rx_1.default.Subject();
-            updateIterationEvent = Rx_1.default.Observable
-                .interval(0, Rx_1.default.Scheduler.asap)
-                .throttleTime(1000 / env.targetUps)
-                .scan((lastAnimationFrameRequest) => {
-                if (lastAnimationFrameRequest !== null) {
-                    cancelAnimationFrame(lastAnimationFrameRequest);
-                }
-                return requestAnimationFrame(() => renderIterationEvent.next());
-            }, null);
-            run();
+            map01_1.default(env);
+            env.run();
         }
     };
 });

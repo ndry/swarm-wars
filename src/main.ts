@@ -7,8 +7,8 @@ import Box2D from "box2dweb";
 import b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
 
 import { FpsTracker } from "./FpsTracker";
+import BABYLON from "babylonjs";
 
-import PIXI from "pixi.js";
 import { Camera } from "./Camera";
 import { isVisible } from "./utils";
 
@@ -24,11 +24,6 @@ class Enviornment {
     canvas = document.getElementById("canvas") as HTMLCanvasElement;
     canvasDebug = document.getElementById("canvas-debug") as HTMLCanvasElement;
     debugCtx = this.canvasDebug.getContext("2d");
-    renderer = PIXI.autoDetectRenderer(this.canvas.clientWidth, this.canvas.clientHeight, {
-        view: this.canvas,
-        antialias: true
-    });
-    stage = new PIXI.Container();
     fpsLabel = document.getElementById("fps-label");
     bodyCountLabel = document.getElementById("body-count-label");
     pauseButton = document.getElementById("pause-button") as HTMLButtonElement;
@@ -36,7 +31,11 @@ class Enviornment {
     stepButton = document.getElementById("step-button") as HTMLButtonElement;
     toggleGravityButton = document.getElementById("toggle-gravity-button") as HTMLButtonElement;
     
-
+    graphics = {
+        engine: null as BABYLON.Engine,
+        scene: null as BABYLON.Scene,
+        camera: null as BABYLON.FreeCamera
+    };
 
 
     updateEvent = new Rx.Subject<number>();
@@ -62,6 +61,8 @@ class Enviornment {
     constructor() {
         _.bindAll(this, "adjustDisplay");
 
+        this.graphics.engine = new BABYLON.Engine(this.canvas, true);
+
         this.pauseButton.addEventListener("click", () => this.isPaused = !this.isPaused);
         this.trackRotationButton.addEventListener("click", () => this.camera.trackRotation = !this.camera.trackRotation);
         this.stepButton.addEventListener("click", () => this.update(1 / 60));
@@ -83,6 +84,18 @@ class Enviornment {
             //debugDraw.SetDrawScale(1/10);
             return debugDraw;
         })());
+
+
+        this.createScene();
+    }
+
+    createScene() : void {
+        this.graphics.scene = new BABYLON.Scene(this.graphics.engine);
+     
+        this.graphics.camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 0, -10), this.graphics.scene);
+        this.graphics.camera.setTarget(BABYLON.Vector3.Zero());
+        this.graphics.camera.attachControl(this.canvas, false);
+     
     }
 
 
@@ -90,9 +103,7 @@ class Enviornment {
         this.canvas.width = this.canvas.clientWidth;
         this.canvas.height = this.canvas.clientHeight;
     
-        this.stage.position.set(
-            this.canvas.width / 2, 
-            this.canvas.height / 2);
+        this.graphics.engine.resize();
     
         if (this.canvasDebug) {
             this.canvasDebug.width = this.canvasDebug.clientWidth;
@@ -100,6 +111,8 @@ class Enviornment {
     
             this.debugCtx.setTransform(1, 0, 0, 1, this.canvasDebug.width / 2, this.canvasDebug.height / 2);
         }
+
+        
     }
 
     update(dt: number) {
@@ -111,7 +124,7 @@ class Enviornment {
         this.renderEvent.next(dt);
         
         this.camera.render();
-        this.renderer.render(this.stage);
+        this.graphics.scene.render();
         
         if (this.canvasDebug && isVisible(this.canvasDebug)) {
             this.debugCtx.save();
@@ -145,6 +158,11 @@ class Enviornment {
                 this.update(1 / this.targetUps)
             }
         });
+
+        
+        // this.graphics.engine.runRenderLoop(() => {
+        //     this.graphics.scene.render();
+        // });
     }
 }
 

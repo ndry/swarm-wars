@@ -1,14 +1,11 @@
-import * as PIXI from "pixi.js";
-
 export class Camera {
-    target: PIXI.DisplayObject;
+    target: any;
     scale: number = 1;
     trackRotation: boolean = false;
 
     constructor(
         private env: {
-            stage: PIXI.Container,
-
+            
             pixelsPerMeter: number,
             debugCtx: CanvasRenderingContext2D
         }
@@ -16,13 +13,13 @@ export class Camera {
     }
 
     render() {
-        if (this.trackRotation && this.target) {
-            this.env.stage.rotation = -this.target.rotation;
-        }
-        this.env.stage.scale.set(this.scale, this.scale);
-        if (this.target) {
-            this.env.stage.pivot.set(this.target.position.x, this.target.position.y);
-        }
+        // if (this.trackRotation && this.target) {
+        //     this.env.stage.rotation = -this.target.rotation;
+        // }
+        // this.env.stage.scale.set(this.scale, this.scale);
+        // if (this.target) {
+        //     this.env.stage.pivot.set(this.target.position.x, this.target.position.y);
+        // }
     }
 
     renderDebug() {

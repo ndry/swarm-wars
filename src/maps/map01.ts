@@ -1,32 +1,25 @@
 import { Earth } from "../Earth";
 import { Body } from "../Body";
 import { Probe } from "../Probe";
-
 import Rx from 'rxjs/Rx';
 import Box2D from "box2dweb";
-
 import b2Vec2 = Box2D.Common.Math.b2Vec2;
 import b2World = Box2D.Dynamics.b2World;
 import b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
 import { Camera } from "../Camera";
+import BABYLON from "babylonjs";
 
 
-export default function (env: {
+export default function (env: Earth.Environment & Body.Environment & Probe.Environment & {
     physics: {
-        world: b2World,
         gravity: {
             gravitationalConstant: number
         }
     },
-    pixelsPerMeter: number,
-    stage: PIXI.Container,
-    renderer: PIXI.CanvasRenderer | PIXI.WebGLRenderer,
-    updateEvent: Rx.Observable<number>,
-    renderEvent: Rx.Observable<number>,
     camera: Camera
 }) {
     const earth = new Earth(env);
-    env.camera.target = earth.sprite;
+    env.camera.target = earth.mesh;
     
     const bodies: Body[] = [];
     for(var i = 0; i < 100; ++i) {
@@ -79,7 +72,7 @@ export default function (env: {
             angle: Math.random() * 2 * Math.PI,
             angularVelocity: 20 * (Math.random() - 0.5),
             radius: Math.random() * .5 + .1,
-            color: (Math.random() < .5) ? 0xff0000 : 0x00ff00
+            color: (Math.random() < .5) ? new BABYLON.Color3(1, 0, 0) : new BABYLON.Color3(0, 1, 0)
         }));
     }    
 }

@@ -1,4 +1,3 @@
-import * as PIXI from "pixi.js";
 import Box2D from "box2dweb";
 import b2World = Box2D.Dynamics.b2World;
 import b2BodyDef = Box2D.Dynamics.b2BodyDef;
@@ -6,43 +5,36 @@ import b2FixtureDef = Box2D.Dynamics.b2FixtureDef;
 import b2Body = Box2D.Dynamics.b2Body;
 import b2Fixture = Box2D.Dynamics.b2Fixture;
 import b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
+
+import BABYLON from "babylonjs";
+
 import Rx from 'rxjs/Rx';
 import { Camera } from "./Camera";
 
-export class Body {
-    static createSpriteTexture(renderer: PIXI.CanvasRenderer | PIXI.WebGLRenderer, radius: number) {
-        const g = new PIXI.Graphics();
-        g.boundsPadding = 1;
-        g.beginFill(0xb4b4b4, .4);
-        g.lineStyle(1, 0xb4b4b4);
-        const cx = renderer instanceof PIXI.WebGLRenderer ? 0 : radius + g.boundsPadding;
-        const cy = renderer instanceof PIXI.WebGLRenderer ? 0 : radius + g.boundsPadding;
-        g.drawCircle(cx, cy, radius);
-        g.endFill();
-        g.moveTo(cx, cy);
-        g.lineTo(cx + radius, cy);
-        return renderer.generateTexture(g, 1, 5);
-        
-    };
+export namespace Body {
+    export interface Environment {
+        physics: {
+            world: b2World
+        },
+        graphics: {
+            scene: BABYLON.Scene;
+        }
+        pixelsPerMeter: number,
+        updateEvent: Rx.Observable<number>,
+        renderEvent: Rx.Observable<number>,
+        camera: Camera
+    }
+}
 
+export class Body {
     body: b2Body;
     fixture: b2Fixture;
-    sprite: PIXI.Sprite;
+    mesh: BABYLON.Mesh;
     updateSubscription: Rx.Subscription;
     renderSubscription: Rx.Subscription;
 
     constructor(
-        private env: {
-            physics: {
-                world: b2World
-            },
-            pixelsPerMeter: number,
-            stage: PIXI.Container,
-            renderer: PIXI.CanvasRenderer | PIXI.WebGLRenderer,
-            updateEvent: Rx.Observable<number>,
-            renderEvent: Rx.Observable<number>,
-            camera: Camera
-        },
+        private env: Body.Environment,
         args: {
             position: {
                 x: number,
@@ -75,14 +67,16 @@ export class Body {
             return fixDef;
         })());
 
-        this.sprite = new PIXI.Sprite(Body.createSpriteTexture(env.renderer, args.radius * this.env.pixelsPerMeter));
-        this.sprite.anchor.set(.5, .5);
-        this.sprite.interactive = true;
-        this.sprite.hitArea = new PIXI.Circle(0, 0, args.radius * this.env.pixelsPerMeter);
-        this.sprite.on("click", () => env.camera.target = this.sprite);
-        this.sprite.on("mouseover", () => this.sprite.tint = 0xa0a0a0);
-        this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
-        env.stage.addChild(this.sprite);
+        this.mesh = BABYLON.MeshBuilder.CreateSphere("", {segments: 16, diameter: args.radius * 2}, this.env.graphics.scene);
+        const m = new BABYLON.StandardMaterial("", env.graphics.scene);
+        m.diffuseColor = new BABYLON.Color3(.5, .5, .5);
+        this.mesh.material = m;
+
+        // this.sprite.interactive = true;
+        // this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
+        // this.sprite.on("click", () => env.camera.target = this.sprite);
+        // this.sprite.on("mouseover", () => this.sprite.tint = 0xa0a0a0);
+        // this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
         
         this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
         this.renderSubscription = env.renderEvent.subscribe(() => this.render());
@@ -93,8 +87,8 @@ export class Body {
     }
         
     render() {
-        this.sprite.x = this.body.GetPosition().x * this.env.pixelsPerMeter;
-        this.sprite.y = this.body.GetPosition().y * this.env.pixelsPerMeter;
-        this.sprite.rotation = this.body.GetAngle();
+        this.mesh.position.x = this.body.GetPosition().x;
+        this.mesh.position.y = this.body.GetPosition().y;
+        this.mesh.rotation.z = this.body.GetAngle();
     }
 }
