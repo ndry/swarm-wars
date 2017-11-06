@@ -67,7 +67,7 @@ export class Body {
             return fixDef;
         })());
 
-        this.mesh = BABYLON.MeshBuilder.CreateSphere("", {segments: 16, diameter: args.radius * 2}, this.env.graphics.scene);
+        this.mesh = BABYLON.MeshBuilder.CreateSphere("", {segments: 4, diameter: args.radius * 2}, this.env.graphics.scene);
         const m = new BABYLON.StandardMaterial("", env.graphics.scene);
         m.diffuseColor = new BABYLON.Color3(.5, .5, .5);
         this.mesh.material = m;
@@ -88,7 +88,7 @@ export class Body {
         
     render() {
         this.mesh.position.x = this.body.GetPosition().x;
-        this.mesh.position.y = this.body.GetPosition().y;
-        this.mesh.rotation.z = this.body.GetAngle();
+        this.mesh.position.z = this.body.GetPosition().y;
+        this.mesh.rotation.y = this.body.GetAngle();
     }
 }

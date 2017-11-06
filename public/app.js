@@ -70,7 +70,7 @@ System.register("Body", ["box2dweb", "babylonjs"], function (exports_2, context_
                         fixDef.shape = new b2CircleShape(args.radius);
                         return fixDef;
                     })());
-                    this.mesh = babylonjs_1.default.MeshBuilder.CreateSphere("", { segments: 16, diameter: args.radius * 2 }, this.env.graphics.scene);
+                    this.mesh = babylonjs_1.default.MeshBuilder.CreateSphere("", { segments: 4, diameter: args.radius * 2 }, this.env.graphics.scene);
                     const m = new babylonjs_1.default.StandardMaterial("", env.graphics.scene);
                     m.diffuseColor = new babylonjs_1.default.Color3(.5, .5, .5);
                     this.mesh.material = m;
@@ -86,8 +86,8 @@ System.register("Body", ["box2dweb", "babylonjs"], function (exports_2, context_
                 }
                 render() {
                     this.mesh.position.x = this.body.GetPosition().x;
-                    this.mesh.position.y = this.body.GetPosition().y;
-                    this.mesh.rotation.z = this.body.GetAngle();
+                    this.mesh.position.z = this.body.GetPosition().y;
+                    this.mesh.rotation.y = this.body.GetAngle();
                 }
             };
             exports_2("Body", Body);
@@ -132,7 +132,7 @@ System.register("Earth", ["box2dweb", "babylonjs"], function (exports_3, context
                         fixDef.shape = new b2CircleShape(1);
                         return fixDef;
                     })());
-                    this.mesh = babylonjs_2.default.MeshBuilder.CreateSphere("", { segments: 16, diameter: radius * 2 }, this.env.graphics.scene);
+                    this.mesh = babylonjs_2.default.MeshBuilder.CreateSphere("", { segments: 4, diameter: radius * 2 }, this.env.graphics.scene);
                     const m = new babylonjs_2.default.StandardMaterial("", env.graphics.scene);
                     m.emissiveColor = new babylonjs_2.default.Color3(1, 1, 1);
                     this.mesh.material = m;
@@ -149,10 +149,10 @@ System.register("Earth", ["box2dweb", "babylonjs"], function (exports_3, context
                 }
                 render() {
                     this.mesh.position.x = this.body.GetPosition().x;
-                    this.mesh.position.y = this.body.GetPosition().y;
-                    this.mesh.rotation.z = this.body.GetAngle();
+                    this.mesh.position.z = this.body.GetPosition().y;
+                    this.mesh.rotation.y = this.body.GetAngle();
                     this.light.position.x = this.body.GetPosition().x;
-                    this.light.position.y = this.body.GetPosition().y;
+                    this.light.position.z = this.body.GetPosition().y;
                 }
             };
             exports_3("Earth", Earth);
@@ -312,7 +312,7 @@ System.register("Probe", ["box2dweb", "babylonjs"], function (exports_8, context
                         fixDef.shape = new b2CircleShape(args.radius);
                         return fixDef;
                     })());
-                    this.mesh = babylonjs_3.default.MeshBuilder.CreateSphere("", { segments: 16, diameter: args.radius * 2 }, this.env.graphics.scene);
+                    this.mesh = babylonjs_3.default.MeshBuilder.CreateSphere("", { segments: 4, diameter: args.radius * 2 }, this.env.graphics.scene);
                     const m = new babylonjs_3.default.StandardMaterial("", env.graphics.scene);
                     m.diffuseColor = args.color;
                     this.mesh.material = m;
@@ -344,8 +344,8 @@ System.register("Probe", ["box2dweb", "babylonjs"], function (exports_8, context
                 }
                 render() {
                     this.mesh.position.x = this.body.GetPosition().x;
-                    this.mesh.position.y = this.body.GetPosition().y;
-                    this.mesh.rotation.z = this.body.GetAngle();
+                    this.mesh.position.z = this.body.GetPosition().y;
+                    this.mesh.rotation.y = this.body.GetAngle();
                 }
             };
             exports_8("Probe", Probe);
@@ -491,24 +491,31 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
                     this.renderIterationEvent = new Rx_1.default.Subject();
                     this.updateIterationEvent = Rx_1.default.Observable
                         .interval(0, Rx_1.default.Scheduler.asap)
-                        .throttleTime(1000 / this.targetUps)
-                        .scan((lastAnimationFrameRequest) => {
-                        if (lastAnimationFrameRequest !== null) {
-                            cancelAnimationFrame(lastAnimationFrameRequest);
-                        }
-                        return requestAnimationFrame(() => this.renderIterationEvent.next());
-                    }, null);
+                        .throttleTime(1000 / this.targetUps);
                     underscore_1.default.bindAll(this, "adjustDisplay");
                     this.graphics.engine = new babylonjs_5.default.Engine(this.canvas, true);
+                    this.graphics.scene = new babylonjs_5.default.Scene(this.graphics.engine);
+                    const camera = new babylonjs_5.default.ArcRotateCamera('camera1', Math.PI / 2, 0, 100, new babylonjs_5.default.Vector3(0, 0, 0), this.graphics.scene);
+                    camera.lowerRadiusLimit = 2;
+                    camera.upperRadiusLimit = 500;
+                    this.graphics.camera = camera;
+                    this.graphics.camera.attachControl(this.canvas, true);
+                    // this.graphics.camera.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
+                    // const ratio = this.graphics.engine.getRenderWidth() / this.graphics.engine.getRenderHeight();
+                    // const halfWidth = 20;
+                    // this.graphics.camera.orthoLeft = -halfWidth;
+                    // this.graphics.camera.orthoRight = halfWidth;
+                    // this.graphics.camera.orthoTop = -halfWidth / ratio;
+                    // this.graphics.camera.orthoBottom = halfWidth / ratio;
                     this.pauseButton.addEventListener("click", () => this.isPaused = !this.isPaused);
                     this.trackRotationButton.addEventListener("click", () => this.camera.trackRotation = !this.camera.trackRotation);
                     this.stepButton.addEventListener("click", () => this.update(1 / 60));
                     this.toggleGravityButton.addEventListener("click", () => this.physics.isGravityOn = !this.physics.isGravityOn);
                     window.addEventListener("resize", this.adjustDisplay);
                     this.adjustDisplay();
-                    window.addEventListener("wheel", e => {
-                        this.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
-                    });
+                    // window.addEventListener("wheel", e => {
+                    //     this.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
+                    // });
                     this.physics.world.SetDebugDraw((() => {
                         const debugDraw = new b2DebugDraw();
                         debugDraw.SetSprite(this.debugCtx);
@@ -518,13 +525,6 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
                         //debugDraw.SetDrawScale(1/10);
                         return debugDraw;
                     })());
-                    this.createScene();
-                }
-                createScene() {
-                    this.graphics.scene = new babylonjs_5.default.Scene(this.graphics.engine);
-                    this.graphics.camera = new babylonjs_5.default.FreeCamera('camera1', new babylonjs_5.default.Vector3(0, 0, -10), this.graphics.scene);
-                    this.graphics.camera.setTarget(babylonjs_5.default.Vector3.Zero());
-                    this.graphics.camera.attachControl(this.canvas, false);
                 }
                 adjustDisplay() {
                     this.canvas.width = this.canvas.clientWidth;
@@ -573,13 +573,32 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
                             this.update(1 / this.targetUps);
                         }
                     });
-                    // this.graphics.engine.runRenderLoop(() => {
-                    //     this.graphics.scene.render();
-                    // });
+                    this.graphics.engine.runRenderLoop(() => {
+                        this.renderIterationEvent.next();
+                    });
                 }
             };
             env = new Enviornment();
             map01_1.default(env);
+            // var onPointerDown = function (ev: PointerEvent) {
+            //     if (ev.button !== 0) {
+            //         return;
+            //     }
+            //     var pickInfo = env.graphics.scene.pick(
+            //         env.graphics.scene.pointerX, 
+            //         env.graphics.scene.pointerY);
+            //     if (pickInfo.hit) {
+            //         env.graphics.camera.position
+            //         // currentMesh = pickInfo.pickedMesh;
+            //         // startingPoint = getGroundPosition(evt);
+            //         // if (startingPoint) { // we need to disconnect camera from canvas
+            //         //     setTimeout(function () {
+            //         //         camera.detachControl(canvas);
+            //         //     }, 0);
+            //         // }
+            //     }
+            // }
+            // env.canvas.addEventListener("pointerdown", onPointerDown, false);
             env.run();
         }
     };

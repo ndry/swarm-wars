@@ -18,6 +18,7 @@
 </script>
 <style>
     html, body {
+        background-color: black;
         overflow: hidden;
         width   : 100%;
         height  : 100%;
@@ -34,12 +35,18 @@
     }
     #canvas {
         background-color:#333333;
-        z-index: -50;
+        z-index: 1;
     }
     #canvas-debug {
         background-color:rgba(0, 0, 0, 0);
-        z-index: -40;
+        z-index: 2;
         visibility: hidden;
+    }
+    #display {
+        position: relative;
+        width: 500px;
+        height: 500px;
+        display: inline-block;
     }
     #gui {
         background-color: rgba(255, 255, 255, 0.171);
@@ -54,16 +61,18 @@
 
 </head>
 <body>
-    <canvas id="canvas" class="display"></canvas>
-    <canvas id="canvas-debug" class="display"></canvas>
-    <div id="gui">
-        <div id="fps-label"></div>
-        <div id="body-count-label"></div>
-        <input id="pause-button" type="button" value="Pause" />
-        <input id="track-rotation-button" type="button" value="Track rotation" />
-        <input id="step-button" type="button" value="Step" />
-        <input id="toggle-gravity-button" type="button" value="Toggle gravity" />
-        
+
+    <div id="display">
+            <canvas id="canvas" class="display"></canvas>
+            <canvas id="canvas-debug" class="display"></canvas>
     </div>
+    <div id="gui">
+            <div id="fps-label"></div>
+            <div id="body-count-label"></div>
+            <input id="pause-button" type="button" value="Pause" />
+            <input id="track-rotation-button" type="button" value="Track rotation" />
+            <input id="step-button" type="button" value="Step" />
+            <input id="toggle-gravity-button" type="button" value="Toggle gravity" />
+        </div>    
 </body>
 </html>

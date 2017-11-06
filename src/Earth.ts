@@ -59,7 +59,7 @@ export class Earth {
             return fixDef;
         })());
 
-        this.mesh = BABYLON.MeshBuilder.CreateSphere("", {segments: 16, diameter: radius * 2}, this.env.graphics.scene);
+        this.mesh = BABYLON.MeshBuilder.CreateSphere("", {segments: 4, diameter: radius * 2}, this.env.graphics.scene);
         const m = new BABYLON.StandardMaterial("", env.graphics.scene);
         m.emissiveColor = new BABYLON.Color3(1, 1, 1);
         this.mesh.material = m;
@@ -83,9 +83,9 @@ export class Earth {
 
     render() {
         this.mesh.position.x = this.body.GetPosition().x;
-        this.mesh.position.y = this.body.GetPosition().y;
-        this.mesh.rotation.z = this.body.GetAngle();
+        this.mesh.position.z = this.body.GetPosition().y;
+        this.mesh.rotation.y = this.body.GetAngle();
         this.light.position.x = this.body.GetPosition().x;
-        this.light.position.y = this.body.GetPosition().y;
+        this.light.position.z = this.body.GetPosition().y;
     }
 }

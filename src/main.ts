@@ -34,7 +34,7 @@ class Enviornment {
     graphics = {
         engine: null as BABYLON.Engine,
         scene: null as BABYLON.Scene,
-        camera: null as BABYLON.FreeCamera
+        camera: null as BABYLON.Camera
     };
 
 
@@ -50,18 +50,40 @@ class Enviornment {
     updateIterationEvent = Rx.Observable
     .interval(0, Rx.Scheduler.asap)
     .throttleTime(1000 / this.targetUps)
-    .scan((lastAnimationFrameRequest: number) => {
-        if (lastAnimationFrameRequest !== null) {
-            cancelAnimationFrame(lastAnimationFrameRequest);
-        }
-        return requestAnimationFrame(() => this.renderIterationEvent.next());
-    }, null);
+    // .scan((lastAnimationFrameRequest: number) => {
+    //     if (lastAnimationFrameRequest !== null) {
+    //         cancelAnimationFrame(lastAnimationFrameRequest);
+    //     }
+    //     return requestAnimationFrame(() => this.renderIterationEvent.next());
+    // }, null)
+    ;
 
 
     constructor() {
         _.bindAll(this, "adjustDisplay");
 
         this.graphics.engine = new BABYLON.Engine(this.canvas, true);
+
+        this.graphics.scene = new BABYLON.Scene(this.graphics.engine);
+        
+        const camera = new BABYLON.ArcRotateCamera('camera1', Math.PI / 2, 0, 100, new BABYLON.Vector3(0, 0, 0), this.graphics.scene);
+        camera.lowerRadiusLimit = 2;
+        camera.upperRadiusLimit = 500;
+
+
+
+        this.graphics.camera = camera;
+        this.graphics.camera.attachControl(this.canvas, true);
+
+
+        // this.graphics.camera.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
+        // const ratio = this.graphics.engine.getRenderWidth() / this.graphics.engine.getRenderHeight();
+        // const halfWidth = 20;
+        // this.graphics.camera.orthoLeft = -halfWidth;
+        // this.graphics.camera.orthoRight = halfWidth;
+        // this.graphics.camera.orthoTop = -halfWidth / ratio;
+        // this.graphics.camera.orthoBottom = halfWidth / ratio;
+
 
         this.pauseButton.addEventListener("click", () => this.isPaused = !this.isPaused);
         this.trackRotationButton.addEventListener("click", () => this.camera.trackRotation = !this.camera.trackRotation);
@@ -71,9 +93,9 @@ class Enviornment {
         window.addEventListener("resize", this.adjustDisplay);
         this.adjustDisplay();
 
-        window.addEventListener("wheel", e => {
-            this.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
-        });
+        // window.addEventListener("wheel", e => {
+        //     this.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
+        // });
 
         this.physics.world.SetDebugDraw((() => {
             const debugDraw = new b2DebugDraw();
@@ -84,20 +106,7 @@ class Enviornment {
             //debugDraw.SetDrawScale(1/10);
             return debugDraw;
         })());
-
-
-        this.createScene();
     }
-
-    createScene() : void {
-        this.graphics.scene = new BABYLON.Scene(this.graphics.engine);
-     
-        this.graphics.camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 0, -10), this.graphics.scene);
-        this.graphics.camera.setTarget(BABYLON.Vector3.Zero());
-        this.graphics.camera.attachControl(this.canvas, false);
-     
-    }
-
 
     adjustDisplay() {
         this.canvas.width = this.canvas.clientWidth;
@@ -160,9 +169,9 @@ class Enviornment {
         });
 
         
-        // this.graphics.engine.runRenderLoop(() => {
-        //     this.graphics.scene.render();
-        // });
+        this.graphics.engine.runRenderLoop(() => {
+            this.renderIterationEvent.next();
+        });
     }
 }
 
@@ -170,5 +179,33 @@ const env = new Enviornment();
 
 import map from "./maps/map01";
 map(env);
+
+
+
+
+// var onPointerDown = function (ev: PointerEvent) {
+//     if (ev.button !== 0) {
+//         return;
+//     }
+
+//     var pickInfo = env.graphics.scene.pick(
+//         env.graphics.scene.pointerX, 
+//         env.graphics.scene.pointerY);
+//     if (pickInfo.hit) {
+//         env.graphics.camera.position
+//         // currentMesh = pickInfo.pickedMesh;
+//         // startingPoint = getGroundPosition(evt);
+
+//         // if (startingPoint) { // we need to disconnect camera from canvas
+//         //     setTimeout(function () {
+//         //         camera.detachControl(canvas);
+//         //     }, 0);
+//         // }
+//     }
+// }
+
+// env.canvas.addEventListener("pointerdown", onPointerDown, false);
+
+
 
 env.run();
