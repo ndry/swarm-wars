@@ -33,8 +33,10 @@ export class Earth {
 
     constructor(
         private env: {
+            physics: {
+                world: b2World
+            },
             pixelsPerMeter: number,
-             world: b2World,
             stage: PIXI.Container,
             renderer: PIXI.CanvasRenderer | PIXI.WebGLRenderer,
             updateEvent: Rx.Observable<number>,
@@ -42,7 +44,7 @@ export class Earth {
             camera: Camera
         }
     ) {
-        this.body = env.world.CreateBody((() => {
+        this.body = env.physics.world.CreateBody((() => {
             var bodyDef = new b2BodyDef;
             bodyDef.type = b2Body.b2_dynamicBody;
             bodyDef.position.x = 0;

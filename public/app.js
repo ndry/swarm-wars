@@ -53,7 +53,7 @@ System.register("Body", ["pixi.js", "box2dweb"], function (exports_2, context_2)
             Body = class Body {
                 constructor(env, args) {
                     this.env = env;
-                    this.body = env.world.CreateBody((() => {
+                    this.body = env.physics.world.CreateBody((() => {
                         var bodyDef = new b2BodyDef;
                         bodyDef.type = b2Body.b2_dynamicBody;
                         bodyDef.position.Set(args.position.x, args.position.y);
@@ -127,7 +127,7 @@ System.register("Earth", ["pixi.js", "box2dweb"], function (exports_3, context_3
             Earth = class Earth {
                 constructor(env) {
                     this.env = env;
-                    this.body = env.world.CreateBody((() => {
+                    this.body = env.physics.world.CreateBody((() => {
                         var bodyDef = new b2BodyDef;
                         bodyDef.type = b2Body.b2_dynamicBody;
                         bodyDef.position.x = 0;
@@ -208,7 +208,7 @@ System.register("FpsTracker", [], function (exports_4, context_4) {
         }
     };
 });
-System.register("Gravity", ["box2dweb"], function (exports_5, context_5) {
+System.register("physics/Gravity", ["box2dweb"], function (exports_5, context_5) {
     var __moduleName = context_5 && context_5.id;
     var box2dweb_3, b2Vec2, Gravity;
     return {
@@ -246,28 +246,61 @@ System.register("Gravity", ["box2dweb"], function (exports_5, context_5) {
         }
     };
 });
-System.register("Probe", ["pixi.js", "box2dweb"], function (exports_6, context_6) {
+System.register("physics/Physics", ["box2dweb", "physics/Gravity"], function (exports_6, context_6) {
     var __moduleName = context_6 && context_6.id;
-    var PIXI, box2dweb_4, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Probe;
+    var box2dweb_4, b2Vec2, b2World, Gravity_1, Physics;
+    return {
+        setters: [
+            function (box2dweb_4_1) {
+                box2dweb_4 = box2dweb_4_1;
+            },
+            function (Gravity_1_1) {
+                Gravity_1 = Gravity_1_1;
+            }
+        ],
+        execute: function () {
+            b2Vec2 = box2dweb_4.default.Common.Math.b2Vec2;
+            b2World = box2dweb_4.default.Dynamics.b2World;
+            Physics = class Physics {
+                constructor() {
+                    this.isGravityOn = true;
+                    this.world = new b2World(new b2Vec2(0, 0), true);
+                    this.gravity = new Gravity_1.Gravity(this.world);
+                }
+                update(dt) {
+                    this.world.ClearForces();
+                    if (this.isGravityOn) {
+                        this.gravity.update();
+                    }
+                    this.world.Step(dt, 10, 10);
+                }
+            };
+            exports_6("Physics", Physics);
+        }
+    };
+});
+System.register("Probe", ["pixi.js", "box2dweb"], function (exports_7, context_7) {
+    var __moduleName = context_7 && context_7.id;
+    var PIXI, box2dweb_5, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Probe;
     return {
         setters: [
             function (PIXI_3) {
                 PIXI = PIXI_3;
             },
-            function (box2dweb_4_1) {
-                box2dweb_4 = box2dweb_4_1;
+            function (box2dweb_5_1) {
+                box2dweb_5 = box2dweb_5_1;
             }
         ],
         execute: function () {
-            b2BodyDef = box2dweb_4.default.Dynamics.b2BodyDef;
-            b2FixtureDef = box2dweb_4.default.Dynamics.b2FixtureDef;
-            b2Body = box2dweb_4.default.Dynamics.b2Body;
-            b2CircleShape = box2dweb_4.default.Collision.Shapes.b2CircleShape;
+            b2BodyDef = box2dweb_5.default.Dynamics.b2BodyDef;
+            b2FixtureDef = box2dweb_5.default.Dynamics.b2FixtureDef;
+            b2Body = box2dweb_5.default.Dynamics.b2Body;
+            b2CircleShape = box2dweb_5.default.Collision.Shapes.b2CircleShape;
             Probe = class Probe {
                 constructor(env, args) {
                     this.env = env;
                     this.args = args;
-                    this.body = env.world.CreateBody((() => {
+                    this.body = env.physics.world.CreateBody((() => {
                         var bodyDef = new b2BodyDef;
                         bodyDef.type = b2Body.b2_dynamicBody;
                         bodyDef.position.Set(args.position.x, args.position.y);
@@ -333,12 +366,12 @@ System.register("Probe", ["pixi.js", "box2dweb"], function (exports_6, context_6
                     this.sprite.rotation = this.body.GetAngle();
                 }
             };
-            exports_6("Probe", Probe);
+            exports_7("Probe", Probe);
         }
     };
 });
-System.register("utils", [], function (exports_7, context_7) {
-    var __moduleName = context_7 && context_7.id;
+System.register("utils", [], function (exports_8, context_8) {
+    var __moduleName = context_8 && context_8.id;
     function isVisible(elt) {
         var style = window.getComputedStyle(elt);
         return +style.width !== 0
@@ -347,15 +380,15 @@ System.register("utils", [], function (exports_7, context_7) {
             && style.display !== 'none'
             && style.visibility !== 'hidden';
     }
-    exports_7("isVisible", isVisible);
+    exports_8("isVisible", isVisible);
     return {
         setters: [],
         execute: function () {
         }
     };
 });
-System.register("main", ["box2dweb", "FpsTracker", "Gravity", "pixi.js", "Earth", "Body", "Probe", "rxjs/Rx", "Camera", "utils"], function (exports_8, context_8) {
-    var __moduleName = context_8 && context_8.id;
+System.register("main", ["physics/Physics", "box2dweb", "FpsTracker", "pixi.js", "Earth", "Body", "Probe", "rxjs/Rx", "Camera", "utils"], function (exports_9, context_9) {
+    var __moduleName = context_9 && context_9.id;
     function adjustDisplay() {
         env.canvas.width = env.canvas.clientWidth;
         env.canvas.height = env.canvas.clientHeight;
@@ -367,11 +400,7 @@ System.register("main", ["box2dweb", "FpsTracker", "Gravity", "pixi.js", "Earth"
         }
     }
     function update(dt) {
-        env.world.ClearForces();
-        if (env.isGravityOn) {
-            env.gravity.update();
-        }
-        env.world.Step(dt, 10, 10);
+        env.physics.update(dt);
         env.updateEvent.next(dt);
     }
     function run() {
@@ -389,10 +418,10 @@ System.register("main", ["box2dweb", "FpsTracker", "Gravity", "pixi.js", "Earth"
                 env.debugCtx.restore();
                 env.debugCtx.save();
                 env.camera.renderDebug();
-                env.world.DrawDebugData();
+                env.physics.world.DrawDebugData();
                 env.debugCtx.restore();
             }
-            env.bodyCountLabel.innerText = `Bodies: ${env.world.GetBodyCount()}`;
+            env.bodyCountLabel.innerText = `Bodies: ${env.physics.world.GetBodyCount()}`;
             env.fpsLabel.innerText = `FPS ${env.fpsTracker.fps && env.fpsTracker.fps.toFixed(2)}`
                 + ` / UPS ${env.upsTracker.fps && env.upsTracker.fps.toFixed(2)}`;
         });
@@ -405,17 +434,17 @@ System.register("main", ["box2dweb", "FpsTracker", "Gravity", "pixi.js", "Earth"
             }
         });
     }
-    var box2dweb_5, b2Vec2, b2World, b2DebugDraw, FpsTracker_1, Gravity_1, pixi_js_1, Earth_1, Body_1, Probe_1, Rx_1, Camera_1, utils_1, Enviornment, env, earth, bodies, i, probes, i, renderIterationEvent, updateIterationEvent;
+    var Physics_1, box2dweb_6, b2Vec2, b2DebugDraw, FpsTracker_1, pixi_js_1, Earth_1, Body_1, Probe_1, Rx_1, Camera_1, utils_1, Enviornment, env, earth, bodies, i, probes, i, renderIterationEvent, updateIterationEvent;
     return {
         setters: [
-            function (box2dweb_5_1) {
-                box2dweb_5 = box2dweb_5_1;
+            function (Physics_1_1) {
+                Physics_1 = Physics_1_1;
+            },
+            function (box2dweb_6_1) {
+                box2dweb_6 = box2dweb_6_1;
             },
             function (FpsTracker_1_1) {
                 FpsTracker_1 = FpsTracker_1_1;
-            },
-            function (Gravity_1_1) {
-                Gravity_1 = Gravity_1_1;
             },
             function (pixi_js_1_1) {
                 pixi_js_1 = pixi_js_1_1;
@@ -440,11 +469,11 @@ System.register("main", ["box2dweb", "FpsTracker", "Gravity", "pixi.js", "Earth"
             }
         ],
         execute: function () {
-            b2Vec2 = box2dweb_5.default.Common.Math.b2Vec2;
-            b2World = box2dweb_5.default.Dynamics.b2World;
-            b2DebugDraw = box2dweb_5.default.Dynamics.b2DebugDraw;
+            b2Vec2 = box2dweb_6.default.Common.Math.b2Vec2;
+            b2DebugDraw = box2dweb_6.default.Dynamics.b2DebugDraw;
             Enviornment = class Enviornment {
                 constructor() {
+                    this.physics = new Physics_1.Physics();
                     this.pixelsPerMeter = 30;
                     this.targetUps = 60;
                     this.upsTracker = new FpsTracker_1.FpsTracker();
@@ -463,9 +492,6 @@ System.register("main", ["box2dweb", "FpsTracker", "Gravity", "pixi.js", "Earth"
                     this.trackRotationButton = document.getElementById("track-rotation-button");
                     this.stepButton = document.getElementById("step-button");
                     this.toggleGravityButton = document.getElementById("toggle-gravity-button");
-                    this.isGravityOn = true;
-                    this.world = new b2World(new b2Vec2(0, 0), true);
-                    this.gravity = new Gravity_1.Gravity(this.world);
                     this.updateEvent = new Rx_1.default.Subject();
                     this.renderEvent = new Rx_1.default.Subject();
                     this.camera = new Camera_1.Camera(this);
@@ -476,7 +502,7 @@ System.register("main", ["box2dweb", "FpsTracker", "Gravity", "pixi.js", "Earth"
             env.pauseButton.addEventListener("click", () => env.isPaused = !env.isPaused);
             env.trackRotationButton.addEventListener("click", () => env.camera.trackRotation = !env.camera.trackRotation);
             env.stepButton.addEventListener("click", () => update(1 / 60));
-            env.toggleGravityButton.addEventListener("click", () => env.isGravityOn = !env.isGravityOn);
+            env.toggleGravityButton.addEventListener("click", () => env.physics.isGravityOn = !env.physics.isGravityOn);
             window.addEventListener("wheel", e => {
                 env.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
             });
@@ -496,7 +522,7 @@ System.register("main", ["box2dweb", "FpsTracker", "Gravity", "pixi.js", "Earth"
                 linearVelocity.Subtract(position);
                 linearVelocity.CrossFV(1);
                 const dstLen = linearVelocity.Normalize();
-                linearVelocity.Multiply(1 * Math.sqrt(env.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
+                linearVelocity.Multiply(1 * Math.sqrt(env.physics.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
                 // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
                 bodies.push(new Body_1.Body(env, {
                     position: position,
@@ -518,7 +544,7 @@ System.register("main", ["box2dweb", "FpsTracker", "Gravity", "pixi.js", "Earth"
                 linearVelocity.Subtract(position);
                 linearVelocity.CrossFV(1);
                 const dstLen = linearVelocity.Normalize();
-                linearVelocity.Multiply(1 * Math.sqrt(env.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
+                linearVelocity.Multiply(1 * Math.sqrt(env.physics.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
                 // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
                 probes.push(new Probe_1.Probe(env, {
                     position: position,
@@ -529,7 +555,7 @@ System.register("main", ["box2dweb", "FpsTracker", "Gravity", "pixi.js", "Earth"
                     color: (Math.random() < .5) ? 0xff0000 : 0x00ff00
                 }));
             }
-            env.world.SetDebugDraw((() => {
+            env.physics.world.SetDebugDraw((() => {
                 const debugDraw = new b2DebugDraw();
                 debugDraw.SetSprite(env.debugCtx);
                 debugDraw.SetFillAlpha(0.4);

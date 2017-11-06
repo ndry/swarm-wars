@@ -1,5 +1,7 @@
 import _ from "underscore";
 
+import { Physics } from "./physics/Physics";
+
 import Box2D from "box2dweb";
 
 import b2Vec2 = Box2D.Common.Math.b2Vec2;
@@ -7,7 +9,6 @@ import b2World = Box2D.Dynamics.b2World;
 import b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
 
 import { FpsTracker } from "./FpsTracker";
-import { Gravity } from "./Gravity";
 
 import PIXI from "pixi.js";
 
@@ -22,8 +23,9 @@ import { timestamp } from "rxjs/operators";
 
 import { isVisible } from "./utils";
 
-
 class Enviornment {
+    physics = new Physics();
+
     pixelsPerMeter = 30;
     targetUps = 60;
 
@@ -45,10 +47,7 @@ class Enviornment {
     stepButton = document.getElementById("step-button") as HTMLButtonElement;
     toggleGravityButton = document.getElementById("toggle-gravity-button") as HTMLButtonElement;
     
-    isGravityOn = true;
 
-    world = new b2World(new b2Vec2(0, 0), true);
-    gravity = new Gravity(this.world);
 
 
     updateEvent = new Rx.Subject<number>();
@@ -65,7 +64,7 @@ const env = new Enviornment();
 env.pauseButton.addEventListener("click", () => env.isPaused = !env.isPaused);
 env.trackRotationButton.addEventListener("click", () => env.camera.trackRotation = !env.camera.trackRotation);
 env.stepButton.addEventListener("click", () => update(1 / 60));
-env.toggleGravityButton.addEventListener("click", () => env.isGravityOn = !env.isGravityOn);
+env.toggleGravityButton.addEventListener("click", () => env.physics.isGravityOn = !env.physics.isGravityOn);
 
 window.addEventListener("wheel", e => {
     env.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
@@ -109,7 +108,7 @@ for(var i = 0; i < 100; ++i) {
     linearVelocity.Subtract(position);
     linearVelocity.CrossFV(1);
     const dstLen = linearVelocity.Normalize();
-    linearVelocity.Multiply(1 * Math.sqrt(env.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
+    linearVelocity.Multiply(1 * Math.sqrt(env.physics.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
     // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
 
 
@@ -136,7 +135,7 @@ for(var i = 0; i < 100; ++i) {
     linearVelocity.Subtract(position);
     linearVelocity.CrossFV(1);
     const dstLen = linearVelocity.Normalize();
-    linearVelocity.Multiply(1 * Math.sqrt(env.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
+    linearVelocity.Multiply(1 * Math.sqrt(env.physics.gravity.gravitationalConstant * earth.body.GetMass() / dstLen));
     // linearVelocity.Set(50 * (Math.random() - 0.5), 50 * (Math.random() - 0.5));
 
 
@@ -152,7 +151,7 @@ for(var i = 0; i < 100; ++i) {
 
 
 
-env.world.SetDebugDraw((() => {
+env.physics.world.SetDebugDraw((() => {
     const debugDraw = new b2DebugDraw();
     debugDraw.SetSprite(env.debugCtx);
     debugDraw.SetFillAlpha(0.4);
@@ -168,12 +167,7 @@ env.world.SetDebugDraw((() => {
 
 
 function update(dt: number) {
-    env.world.ClearForces();
-    if (env.isGravityOn) {
-        env.gravity.update();
-    }
-    env.world.Step(dt, 10, 10);
-
+    env.physics.update(dt);
     env.updateEvent.next(dt);
 }
 
@@ -208,11 +202,11 @@ function run() {
             env.debugCtx.restore();
             env.debugCtx.save();
             env.camera.renderDebug();
-            env.world.DrawDebugData();
+            env.physics.world.DrawDebugData();
             env.debugCtx.restore();
         }
         
-        env.bodyCountLabel.innerText = `Bodies: ${env.world.GetBodyCount()}`;
+        env.bodyCountLabel.innerText = `Bodies: ${env.physics.world.GetBodyCount()}`;
         env.fpsLabel.innerText = `FPS ${env.fpsTracker.fps && env.fpsTracker.fps.toFixed(2)}`
             + ` / UPS ${env.upsTracker.fps && env.upsTracker.fps.toFixed(2)}`;
     });
