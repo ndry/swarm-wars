@@ -30,11 +30,11 @@ class Enviornment {
     trackRotationButton = document.getElementById("track-rotation-button") as HTMLButtonElement;
     stepButton = document.getElementById("step-button") as HTMLButtonElement;
     toggleGravityButton = document.getElementById("toggle-gravity-button") as HTMLButtonElement;
-    
+
     graphics = {
         engine: null as BABYLON.Engine,
         scene: null as BABYLON.Scene,
-        camera: null as BABYLON.Camera
+        camera: null as BABYLON.ArcRotateCamera
     };
 
 
@@ -50,18 +50,21 @@ class Enviornment {
     updateIterationEvent = Rx.Observable
     .interval(0, Rx.Scheduler.asap)
     .throttleTime(1000 / this.targetUps)
-    // .scan((lastAnimationFrameRequest: number) => {
-    //     if (lastAnimationFrameRequest !== null) {
-    //         cancelAnimationFrame(lastAnimationFrameRequest);
-    //     }
-    //     return requestAnimationFrame(() => this.renderIterationEvent.next());
-    // }, null)
+    .scan((lastAnimationFrameRequest: number) => {
+        if (lastAnimationFrameRequest !== null) {
+            cancelAnimationFrame(lastAnimationFrameRequest);
+        }
+        return requestAnimationFrame(() => this.renderIterationEvent.next());
+    }, null)
     ;
 
 
     constructor() {
         _.bindAll(this, "adjustDisplay");
 
+        this.canvas.addEventListener("contextmenu", ev => ev.preventDefault());
+        this.canvasDebug.addEventListener("contextmenu", ev => ev.preventDefault());
+        
         this.graphics.engine = new BABYLON.Engine(this.canvas, true);
 
         this.graphics.scene = new BABYLON.Scene(this.graphics.engine);
@@ -73,7 +76,7 @@ class Enviornment {
 
 
         this.graphics.camera = camera;
-        this.graphics.camera.attachControl(this.canvas, true);
+        this.graphics.camera.attachControl(this.canvas, false);
 
 
         // this.graphics.camera.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
@@ -92,10 +95,6 @@ class Enviornment {
 
         window.addEventListener("resize", this.adjustDisplay);
         this.adjustDisplay();
-
-        // window.addEventListener("wheel", e => {
-        //     this.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
-        // });
 
         this.physics.world.SetDebugDraw((() => {
             const debugDraw = new b2DebugDraw();
@@ -119,6 +118,7 @@ class Enviornment {
             this.canvasDebug.height = this.canvasDebug.clientHeight;
     
             this.debugCtx.setTransform(1, 0, 0, 1, this.canvasDebug.width / 2, this.canvasDebug.height / 2);
+            this.debugCtx.scale(1, -1);
         }
 
         
@@ -141,6 +141,26 @@ class Enviornment {
             this.debugCtx.clearRect(0, 0, this.debugCtx.canvas.width, this.debugCtx.canvas.height);
             this.debugCtx.restore();
             this.debugCtx.save();
+
+            this.debugCtx.rotate(this.graphics.camera.alpha + Math.PI / 2);
+            
+            const scale = 1 / this.graphics.camera.radius * 20;
+            this.debugCtx.scale(scale, scale);
+            
+            if (this.graphics.camera.lockedTarget) {
+                this.debugCtx.translate(
+                    -this.graphics.camera.lockedTarget.position.x * 30,
+                    -this.graphics.camera.lockedTarget.position.z * 30);
+            } else {
+                this.debugCtx.translate(
+                    -this.graphics.camera.target.x * 30,
+                    -this.graphics.camera.target.z * 30);
+            }
+
+            
+            
+            
+            
             this.camera.renderDebug();
             this.physics.world.DrawDebugData();
             this.debugCtx.restore();
@@ -167,11 +187,10 @@ class Enviornment {
                 this.update(1 / this.targetUps)
             }
         });
-
         
-        this.graphics.engine.runRenderLoop(() => {
-            this.renderIterationEvent.next();
-        });
+        // this.graphics.engine.runRenderLoop(() => {
+        //     this.renderIterationEvent.next();
+        // });
     }
 }
 
@@ -179,33 +198,5 @@ const env = new Enviornment();
 
 import map from "./maps/map01";
 map(env);
-
-
-
-
-// var onPointerDown = function (ev: PointerEvent) {
-//     if (ev.button !== 0) {
-//         return;
-//     }
-
-//     var pickInfo = env.graphics.scene.pick(
-//         env.graphics.scene.pointerX, 
-//         env.graphics.scene.pointerY);
-//     if (pickInfo.hit) {
-//         env.graphics.camera.position
-//         // currentMesh = pickInfo.pickedMesh;
-//         // startingPoint = getGroundPosition(evt);
-
-//         // if (startingPoint) { // we need to disconnect camera from canvas
-//         //     setTimeout(function () {
-//         //         camera.detachControl(canvas);
-//         //     }, 0);
-//         // }
-//     }
-// }
-
-// env.canvas.addEventListener("pointerdown", onPointerDown, false);
-
-
 
 env.run();

@@ -74,11 +74,18 @@ System.register("Body", ["box2dweb", "babylonjs"], function (exports_2, context_
                     const m = new babylonjs_1.default.StandardMaterial("", env.graphics.scene);
                     m.diffuseColor = new babylonjs_1.default.Color3(.5, .5, .5);
                     this.mesh.material = m;
-                    // this.sprite.interactive = true;
-                    // this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
-                    // this.sprite.on("click", () => env.camera.target = this.sprite);
-                    // this.sprite.on("mouseover", () => this.sprite.tint = 0xa0a0a0);
-                    // this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
+                    this.mesh.outlineColor = new babylonjs_1.default.Color3(0, 0, 1);
+                    this.mesh.outlineWidth = .05;
+                    this.mesh.actionManager = new babylonjs_1.default.ActionManager(this.env.graphics.scene);
+                    this.mesh.actionManager.registerAction(new babylonjs_1.default.ExecuteCodeAction(babylonjs_1.default.ActionManager.OnPointerOverTrigger, evt => {
+                        this.mesh.renderOutline = true;
+                    }));
+                    this.mesh.actionManager.registerAction(new babylonjs_1.default.ExecuteCodeAction(babylonjs_1.default.ActionManager.OnPointerOutTrigger, evt => {
+                        this.mesh.renderOutline = false;
+                    }));
+                    this.mesh.actionManager.registerAction(new babylonjs_1.default.ExecuteCodeAction(babylonjs_1.default.ActionManager.OnPickTrigger, evt => {
+                        this.env.graphics.camera.lockedTarget = this.mesh;
+                    }));
                     this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
                     this.renderSubscription = env.renderEvent.subscribe(() => this.render());
                 }
@@ -137,11 +144,18 @@ System.register("Earth", ["box2dweb", "babylonjs"], function (exports_3, context
                     m.emissiveColor = new babylonjs_2.default.Color3(1, 1, 1);
                     this.mesh.material = m;
                     this.light = new babylonjs_2.default.PointLight("", new babylonjs_2.default.Vector3(0, 0, 0), this.env.graphics.scene);
-                    // this.sprite.interactive = true;
-                    // this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
-                    // this.sprite.on("click", () => env.camera.target = this.sprite);
-                    // this.sprite.on("mouseover", () => this.sprite.tint = 0xa0a0a0);
-                    // this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
+                    this.mesh.outlineColor = new babylonjs_2.default.Color3(0, 0, 1);
+                    this.mesh.outlineWidth = .05;
+                    this.mesh.actionManager = new babylonjs_2.default.ActionManager(this.env.graphics.scene);
+                    this.mesh.actionManager.registerAction(new babylonjs_2.default.ExecuteCodeAction(babylonjs_2.default.ActionManager.OnPointerOverTrigger, evt => {
+                        this.mesh.renderOutline = true;
+                    }));
+                    this.mesh.actionManager.registerAction(new babylonjs_2.default.ExecuteCodeAction(babylonjs_2.default.ActionManager.OnPointerOutTrigger, evt => {
+                        this.mesh.renderOutline = false;
+                    }));
+                    this.mesh.actionManager.registerAction(new babylonjs_2.default.ExecuteCodeAction(babylonjs_2.default.ActionManager.OnPickTrigger, evt => {
+                        this.env.graphics.camera.lockedTarget = this.mesh;
+                    }));
                     this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
                     this.renderSubscription = env.renderEvent.subscribe(() => this.render());
                 }
@@ -316,11 +330,18 @@ System.register("Probe", ["box2dweb", "babylonjs"], function (exports_8, context
                     const m = new babylonjs_3.default.StandardMaterial("", env.graphics.scene);
                     m.diffuseColor = args.color;
                     this.mesh.material = m;
-                    // this.sprite.interactive = true;
-                    // this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
-                    // this.sprite.on("click", () => env.camera.target = this.sprite);
-                    // this.sprite.on("mouseover", () => this.sprite.tint = 0xa0a0a0);
-                    // this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
+                    this.mesh.outlineColor = new babylonjs_3.default.Color3(0, 0, 1);
+                    this.mesh.outlineWidth = .05;
+                    this.mesh.actionManager = new babylonjs_3.default.ActionManager(this.env.graphics.scene);
+                    this.mesh.actionManager.registerAction(new babylonjs_3.default.ExecuteCodeAction(babylonjs_3.default.ActionManager.OnPointerOverTrigger, evt => {
+                        this.mesh.renderOutline = true;
+                    }));
+                    this.mesh.actionManager.registerAction(new babylonjs_3.default.ExecuteCodeAction(babylonjs_3.default.ActionManager.OnPointerOutTrigger, evt => {
+                        this.mesh.renderOutline = false;
+                    }));
+                    this.mesh.actionManager.registerAction(new babylonjs_3.default.ExecuteCodeAction(babylonjs_3.default.ActionManager.OnPickTrigger, evt => {
+                        this.env.graphics.camera.lockedTarget = this.mesh;
+                    }));
                     this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
                     this.renderSubscription = env.renderEvent.subscribe(() => this.render());
                 }
@@ -491,15 +512,23 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
                     this.renderIterationEvent = new Rx_1.default.Subject();
                     this.updateIterationEvent = Rx_1.default.Observable
                         .interval(0, Rx_1.default.Scheduler.asap)
-                        .throttleTime(1000 / this.targetUps);
+                        .throttleTime(1000 / this.targetUps)
+                        .scan((lastAnimationFrameRequest) => {
+                        if (lastAnimationFrameRequest !== null) {
+                            cancelAnimationFrame(lastAnimationFrameRequest);
+                        }
+                        return requestAnimationFrame(() => this.renderIterationEvent.next());
+                    }, null);
                     underscore_1.default.bindAll(this, "adjustDisplay");
+                    this.canvas.addEventListener("contextmenu", ev => ev.preventDefault());
+                    this.canvasDebug.addEventListener("contextmenu", ev => ev.preventDefault());
                     this.graphics.engine = new babylonjs_5.default.Engine(this.canvas, true);
                     this.graphics.scene = new babylonjs_5.default.Scene(this.graphics.engine);
                     const camera = new babylonjs_5.default.ArcRotateCamera('camera1', Math.PI / 2, 0, 100, new babylonjs_5.default.Vector3(0, 0, 0), this.graphics.scene);
                     camera.lowerRadiusLimit = 2;
                     camera.upperRadiusLimit = 500;
                     this.graphics.camera = camera;
-                    this.graphics.camera.attachControl(this.canvas, true);
+                    this.graphics.camera.attachControl(this.canvas, false);
                     // this.graphics.camera.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
                     // const ratio = this.graphics.engine.getRenderWidth() / this.graphics.engine.getRenderHeight();
                     // const halfWidth = 20;
@@ -513,9 +542,6 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
                     this.toggleGravityButton.addEventListener("click", () => this.physics.isGravityOn = !this.physics.isGravityOn);
                     window.addEventListener("resize", this.adjustDisplay);
                     this.adjustDisplay();
-                    // window.addEventListener("wheel", e => {
-                    //     this.camera.scale *= Math.pow(1.1, -e.deltaY / 100);
-                    // });
                     this.physics.world.SetDebugDraw((() => {
                         const debugDraw = new b2DebugDraw();
                         debugDraw.SetSprite(this.debugCtx);
@@ -534,6 +560,7 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
                         this.canvasDebug.width = this.canvasDebug.clientWidth;
                         this.canvasDebug.height = this.canvasDebug.clientHeight;
                         this.debugCtx.setTransform(1, 0, 0, 1, this.canvasDebug.width / 2, this.canvasDebug.height / 2);
+                        this.debugCtx.scale(1, -1);
                     }
                 }
                 update(dt) {
@@ -550,6 +577,15 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
                         this.debugCtx.clearRect(0, 0, this.debugCtx.canvas.width, this.debugCtx.canvas.height);
                         this.debugCtx.restore();
                         this.debugCtx.save();
+                        this.debugCtx.rotate(this.graphics.camera.alpha + Math.PI / 2);
+                        const scale = 1 / this.graphics.camera.radius * 20;
+                        this.debugCtx.scale(scale, scale);
+                        if (this.graphics.camera.lockedTarget) {
+                            this.debugCtx.translate(-this.graphics.camera.lockedTarget.position.x * 30, -this.graphics.camera.lockedTarget.position.z * 30);
+                        }
+                        else {
+                            this.debugCtx.translate(-this.graphics.camera.target.x * 30, -this.graphics.camera.target.z * 30);
+                        }
                         this.camera.renderDebug();
                         this.physics.world.DrawDebugData();
                         this.debugCtx.restore();
@@ -573,32 +609,13 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
                             this.update(1 / this.targetUps);
                         }
                     });
-                    this.graphics.engine.runRenderLoop(() => {
-                        this.renderIterationEvent.next();
-                    });
+                    // this.graphics.engine.runRenderLoop(() => {
+                    //     this.renderIterationEvent.next();
+                    // });
                 }
             };
             env = new Enviornment();
             map01_1.default(env);
-            // var onPointerDown = function (ev: PointerEvent) {
-            //     if (ev.button !== 0) {
-            //         return;
-            //     }
-            //     var pickInfo = env.graphics.scene.pick(
-            //         env.graphics.scene.pointerX, 
-            //         env.graphics.scene.pointerY);
-            //     if (pickInfo.hit) {
-            //         env.graphics.camera.position
-            //         // currentMesh = pickInfo.pickedMesh;
-            //         // startingPoint = getGroundPosition(evt);
-            //         // if (startingPoint) { // we need to disconnect camera from canvas
-            //         //     setTimeout(function () {
-            //         //         camera.detachControl(canvas);
-            //         //     }, 0);
-            //         // }
-            //     }
-            // }
-            // env.canvas.addEventListener("pointerdown", onPointerDown, false);
             env.run();
         }
     };

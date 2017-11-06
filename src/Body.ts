@@ -18,6 +18,7 @@ export namespace Body {
         },
         graphics: {
             scene: BABYLON.Scene;
+            camera: BABYLON.ArcRotateCamera;
         }
         pixelsPerMeter: number,
         updateEvent: Rx.Observable<number>,
@@ -72,18 +73,27 @@ export class Body {
         m.diffuseColor = new BABYLON.Color3(.5, .5, .5);
         this.mesh.material = m;
 
-        // this.sprite.interactive = true;
-        // this.sprite.hitArea = new PIXI.Circle(0, 0, 1 * this.env.pixelsPerMeter);
-        // this.sprite.on("click", () => env.camera.target = this.sprite);
-        // this.sprite.on("mouseover", () => this.sprite.tint = 0xa0a0a0);
-        // this.sprite.on("mouseout", () => this.sprite.tint = 0xffffff);
+        this.mesh.outlineColor = new BABYLON.Color3(0, 0, 1);
+        this.mesh.outlineWidth = .05;
+
+        this.mesh.actionManager = new BABYLON.ActionManager(this.env.graphics.scene);
+        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, evt => {
+            this.mesh.renderOutline = true;
+        }));
+        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, evt => {
+            this.mesh.renderOutline = false;
+        }));
+        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, evt => {
+            this.env.graphics.camera.lockedTarget = this.mesh;
+        }));
+        
+        
         
         this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
         this.renderSubscription = env.renderEvent.subscribe(() => this.render());
     }
 
     update(dt: number) {
-        
     }
         
     render() {
