@@ -10,7 +10,7 @@ export class GraphicsEnvionment {
     }
 
     engine = new BABYLON.Engine(this.env.canvas, true);
-    
+
     scene = adjust(new BABYLON.Scene(this.engine), scene => {
         scene.clearColor = new BABYLON.Color4(0.1, 0, 0.1, 1);
     });
@@ -25,5 +25,8 @@ export class GraphicsEnvionment {
     })();
 
     guiView = new GuiView(this.scene);
+
+    isWorldGuiOn = true;
+    worldGuiRoot = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("", true, this.scene);
     
 }

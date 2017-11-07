@@ -77,6 +77,17 @@ export class GuiView {
         }
     );
 
+    toggleWorldGuiButton = create(
+        BABYLON.GUI.Button, 
+        this.panel, 
+        GuiView.defaultButtonStyle,
+        el => {
+            create(BABYLON.GUI.TextBlock, el, el => {
+                el.text = "Toggle World GUI"}
+            );
+        }
+    );
+
 
 
 

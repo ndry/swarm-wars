@@ -10,30 +10,6 @@ import Rx from 'rxjs/Rx';
 import { Military } from "./physics/Military";
 import { adjust } from "./utils";
 
-
-        
-var createLabel = function(mesh: BABYLON.Mesh, scene: BABYLON.Scene) {
-    var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("ui1", false, scene);
-    var label = new BABYLON.GUI.Rectangle("label for " + mesh.name);
-    label.background = "black"
-    label.height = "30px";
-    label.alpha = 0.5;
-    label.width = "100px";
-    label.cornerRadius = 20;
-    label.thickness = 1;
-    label.linkOffsetY = 30;
-    advancedTexture.addControl(label); 
-    label.linkWithMesh(mesh);
-
-    var text1 = new BABYLON.GUI.TextBlock();
-    text1.text = mesh.name;
-    text1.color = "white";
-    label.addControl(text1);  
-
-    return text1;
-}  
-
-
 export namespace Probe {
     export interface Environment {
         physics: {
@@ -42,6 +18,8 @@ export namespace Probe {
         graphics: {
             scene: BABYLON.Scene;
             camera: BABYLON.ArcRotateCamera;
+            isWorldGuiOn: boolean;
+            worldGuiRoot: BABYLON.GUI.AdvancedDynamicTexture;
         }
         pixelsPerMeter: number,
         updateObservable: Rx.Observable<number>,
@@ -102,7 +80,22 @@ export class Probe {
         }));
     })
 
-    label = createLabel(this.mesh, this.env.graphics.scene);
+    labelRoot = adjust(new BABYLON.GUI.StackPanel(), panel => {
+        panel.background = "black"
+        panel.alpha = 0.5;
+        panel.width = "150px";
+        panel.height = "200px";
+        panel.linkOffsetY = 150;
+        this.env.graphics.worldGuiRoot.addControl(panel); 
+        panel.linkWithMesh(this.mesh);
+    });
+
+    labelTextBlock = adjust(new BABYLON.GUI.TextBlock(), textBlock => {
+        textBlock.color = "white";
+        textBlock.fontSize = "15px";
+        textBlock.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this.labelRoot.addControl(textBlock);  
+    });
 
     updateSubscription = this.env.updateObservable.subscribe(dt => this.update(dt));
     renderSubscription = this.env.renderObservable.subscribe(() => this.render());
@@ -153,6 +146,7 @@ export class Probe {
         this.mesh.position.x = this.body.GetPosition().x;
         this.mesh.position.z = this.body.GetPosition().y;
         this.mesh.rotation.y = this.body.GetAngle();
-        this.label.text = this.state.hitPoints.toFixed(2);
+        this.labelRoot.isVisible = this.env.graphics.isWorldGuiOn;
+        this.labelTextBlock.text = JSON.stringify(this.state, null, 4);
     }
 }

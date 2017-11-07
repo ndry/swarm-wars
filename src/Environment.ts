@@ -68,6 +68,10 @@ export class Enviornment {
             this.physics.isGravityOn = !this.physics.isGravityOn
         });
 
+        this.graphics.guiView.toggleWorldGuiButton.onPointerUpObservable.add(() => {
+            this.graphics.isWorldGuiOn = !this.graphics.isWorldGuiOn;
+        });
+
         window.addEventListener("resize", this.adjustDisplay);
         this.adjustDisplay();
     }
