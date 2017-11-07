@@ -7,6 +7,32 @@ import b2Fixture = Box2D.Dynamics.b2Fixture;
 import b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
 
 import Rx from 'rxjs/Rx';
+import { Military } from "./physics/Military";
+import { adjust } from "./utils";
+
+
+        
+var createLabel = function(mesh: BABYLON.Mesh, scene: BABYLON.Scene) {
+    var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("ui1", false, scene);
+    var label = new BABYLON.GUI.Rectangle("label for " + mesh.name);
+    label.background = "black"
+    label.height = "30px";
+    label.alpha = 0.5;
+    label.width = "100px";
+    label.cornerRadius = 20;
+    label.thickness = 1;
+    label.linkOffsetY = 30;
+    advancedTexture.addControl(label); 
+    label.linkWithMesh(mesh);
+
+    var text1 = new BABYLON.GUI.TextBlock();
+    text1.text = mesh.name;
+    text1.color = "white";
+    label.addControl(text1);  
+
+    return text1;
+}  
+
 
 export namespace Probe {
     export interface Environment {
@@ -24,11 +50,63 @@ export namespace Probe {
 }
 
 export class Probe {
-    body: b2Body;
-    fixture: b2Fixture;
-    mesh: BABYLON.Mesh;
-    updateSubscription: Rx.Subscription;
-    renderSubscription: Rx.Subscription;
+    
+    state: Military.State = {
+        hitPoints: 100,
+        attack: 10,
+        defense: 10,
+        faction: this.args.color.toHexString(),
+        range: this.args.radius * 5
+    };
+
+    body = this.env.physics.world.CreateBody((() => {
+        var bodyDef = new b2BodyDef;
+        bodyDef.type = b2Body.b2_dynamicBody;
+        bodyDef.position.Set(this.args.position.x, this.args.position.y);
+        bodyDef.linearVelocity.Set(this.args.linearVelocity.x, this.args.linearVelocity.y);
+        bodyDef.angularVelocity = this.args.angularVelocity;
+        bodyDef.angle = this.args.angle;
+        bodyDef.userData = this.state;
+        return bodyDef;
+    })());
+
+    fixture = this.body.CreateFixture((() => {
+        var fixDef = new b2FixtureDef;
+        fixDef.density = this.args.density;
+        fixDef.friction = 1.0;
+        fixDef.restitution = .1;
+        fixDef.shape = new b2CircleShape(this.args.radius);
+        return fixDef;
+    })());
+
+    mesh = adjust(BABYLON.MeshBuilder.CreateSphere("", {
+        segments: 4, 
+        diameter: this.args.radius * 2
+    }, this.env.graphics.scene), mesh => {
+        const m = new BABYLON.StandardMaterial("", this.env.graphics.scene);
+        m.diffuseColor = this.args.color;
+        mesh.material = m;
+
+        mesh.outlineColor = new BABYLON.Color3(0, 0, 1);
+        mesh.outlineWidth = .05;
+
+        mesh.actionManager = new BABYLON.ActionManager(this.env.graphics.scene);
+        mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, evt => {
+            mesh.renderOutline = true;
+        }));
+        mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, evt => {
+            mesh.renderOutline = false;
+        }));
+        mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, evt => {
+            this.env.graphics.camera.lockedTarget = mesh;
+        }));
+    })
+
+    label = createLabel(this.mesh, this.env.graphics.scene);
+
+    updateSubscription = this.env.updateObservable.subscribe(dt => this.update(dt));
+    renderSubscription = this.env.renderObservable.subscribe(() => this.render());
+
 
     constructor(
         private env: Probe.Environment,
@@ -48,46 +126,7 @@ export class Probe {
             color: BABYLON.Color3
         }
     ) {
-        this.body = env.physics.world.CreateBody((() => {
-            var bodyDef = new b2BodyDef;
-            bodyDef.type = b2Body.b2_dynamicBody;
-            bodyDef.position.Set(args.position.x, args.position.y);
-            bodyDef.linearVelocity.Set(args.linearVelocity.x, args.linearVelocity.y);
-            bodyDef.angularVelocity = args.angularVelocity;
-            bodyDef.angle = args.angle;
-            return bodyDef;
-        })());
-        this.fixture = this.body.CreateFixture((() => {
-            var fixDef = new b2FixtureDef;
-            fixDef.density = args.density;
-            fixDef.friction = 1.0;
-            fixDef.restitution = .1;
-            fixDef.shape = new b2CircleShape(args.radius);
-            return fixDef;
-        })());
 
-        this.mesh = BABYLON.MeshBuilder.CreateSphere("", {segments: 4, diameter: args.radius * 2}, this.env.graphics.scene);
-        const m = new BABYLON.StandardMaterial("", env.graphics.scene);
-        m.diffuseColor = args.color;
-        this.mesh.material = m;
-
-        this.mesh.outlineColor = new BABYLON.Color3(0, 0, 1);
-        this.mesh.outlineWidth = .05;
-
-        this.mesh.actionManager = new BABYLON.ActionManager(this.env.graphics.scene);
-        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, evt => {
-            this.mesh.renderOutline = true;
-        }));
-        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, evt => {
-            this.mesh.renderOutline = false;
-        }));
-        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, evt => {
-            this.env.graphics.camera.lockedTarget = this.mesh;
-        }));
-        
-        
-        this.updateSubscription = env.updateObservable.subscribe(dt => this.update(dt));
-        this.renderSubscription = env.renderObservable.subscribe(() => this.render());
     }
 
     update(dt: number) {
@@ -114,5 +153,6 @@ export class Probe {
         this.mesh.position.x = this.body.GetPosition().x;
         this.mesh.position.z = this.body.GetPosition().y;
         this.mesh.rotation.y = this.body.GetAngle();
+        this.label.text = this.state.hitPoints.toFixed(2);
     }
 }

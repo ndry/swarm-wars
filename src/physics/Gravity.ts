@@ -14,7 +14,7 @@ export class Gravity {
         this.gravitationalConstant = gravitationalConstant;
     }
 
-    update() {
+    update(dt: number) {
         const dst = new b2Vec2(0, 0);
         for (var thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
             for (var otherBody = this.world.GetBodyList(); otherBody; otherBody = otherBody.GetNext()) {
