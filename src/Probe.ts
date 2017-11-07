@@ -7,7 +7,6 @@ import b2Fixture = Box2D.Dynamics.b2Fixture;
 import b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
 
 import Rx from 'rxjs/Rx';
-import { Camera } from "./Camera";
 
 export namespace Probe {
     export interface Environment {
@@ -20,8 +19,7 @@ export namespace Probe {
         }
         pixelsPerMeter: number,
         updateObservable: Rx.Observable<number>,
-        renderObservable: Rx.Observable<number>,
-        camera: Camera
+        renderObservable: Rx.Observable<number>
     }
 }
 

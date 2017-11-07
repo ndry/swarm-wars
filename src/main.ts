@@ -6,7 +6,6 @@ import { Physics } from "./physics/Physics";
 import Box2D from "box2dweb";
 import b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
 
-import { Camera } from "./Camera";
 import { isVisible } from "./utils";
 import { FpsTracker } from "./FpsTracker";
 import { GraphicsEnvionment } from "./graphics/GraphicsEnvironment";
@@ -21,8 +20,6 @@ class Enviornment {
     fpsTracker = new FpsTracker();
 
     canvas = document.getElementById("canvas") as HTMLCanvasElement;
-    canvasDebug = document.getElementById("canvas-debug") as HTMLCanvasElement;
-    debugCtx = this.canvasDebug.getContext("2d");
     
     graphics = new GraphicsEnvionment(this);
 
@@ -31,8 +28,6 @@ class Enviornment {
     updateObservable = new Rx.Subject<number>();
     renderObservable = new Rx.Subject<number>();
 
-
-    camera = new Camera(this);
 
     isPaused = false;
 
@@ -53,9 +48,6 @@ class Enviornment {
         _.bindAll(this, "adjustDisplay");
 
         this.canvas.addEventListener("contextmenu", ev => ev.preventDefault());
-        this.canvasDebug.addEventListener("contextmenu", ev => ev.preventDefault());
-
-
 
         // this.graphics.camera.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
         // const ratio = this.graphics.engine.getRenderWidth() / this.graphics.engine.getRenderHeight();
@@ -80,16 +72,6 @@ class Enviornment {
 
         window.addEventListener("resize", this.adjustDisplay);
         this.adjustDisplay();
-
-        this.physics.world.SetDebugDraw((() => {
-            const debugDraw = new b2DebugDraw();
-            debugDraw.SetSprite(this.debugCtx);
-            debugDraw.SetFillAlpha(0.4);
-            debugDraw.SetLineThickness(.05);
-            debugDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);
-            //debugDraw.SetDrawScale(1/10);
-            return debugDraw;
-        })());
     }
 
     adjustDisplay() {
@@ -97,16 +79,6 @@ class Enviornment {
         this.canvas.height = this.canvas.clientHeight;
     
         this.graphics.engine.resize();
-    
-        if (this.canvasDebug) {
-            this.canvasDebug.width = this.canvasDebug.clientWidth;
-            this.canvasDebug.height = this.canvasDebug.clientHeight;
-    
-            this.debugCtx.setTransform(1, 0, 0, 1, this.canvasDebug.width / 2, this.canvasDebug.height / 2);
-            this.debugCtx.scale(1, -1);
-        }
-
-        
     }
 
     update(dt: number) {
@@ -116,40 +88,7 @@ class Enviornment {
 
     render(dt: number) {
         this.renderObservable.next(dt);
-        
-        this.camera.render();
         this.graphics.scene.render();
-        
-        if (this.canvasDebug && isVisible(this.canvasDebug)) {
-            this.debugCtx.save();
-            this.debugCtx.setTransform(1, 0, 0, 1, 0, 0);
-            this.debugCtx.clearRect(0, 0, this.debugCtx.canvas.width, this.debugCtx.canvas.height);
-            this.debugCtx.restore();
-            this.debugCtx.save();
-
-            this.debugCtx.rotate(this.graphics.camera.alpha + Math.PI / 2);
-            
-            const scale = 1 / this.graphics.camera.radius * 20;
-            this.debugCtx.scale(scale, scale);
-            
-            if (this.graphics.camera.lockedTarget) {
-                this.debugCtx.translate(
-                    -this.graphics.camera.lockedTarget.position.x * 30,
-                    -this.graphics.camera.lockedTarget.position.z * 30);
-            } else {
-                this.debugCtx.translate(
-                    -this.graphics.camera.target.x * 30,
-                    -this.graphics.camera.target.z * 30);
-            }
-
-            
-            
-            
-            
-            this.camera.renderDebug();
-            this.physics.world.DrawDebugData();
-            this.debugCtx.restore();
-        }
         
         this.graphics.guiView.bodyCountLabel.text = `Bodies: ${this.physics.world.GetBodyCount()}`;
         this.graphics.guiView.fpsLabel.text = `FPS ${this.fpsTracker.fps && this.fpsTracker.fps.toFixed(2)}`

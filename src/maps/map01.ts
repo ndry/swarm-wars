@@ -7,7 +7,6 @@ import b2Vec2 = Box2D.Common.Math.b2Vec2;
 import b2World = Box2D.Dynamics.b2World;
 import b2Body = Box2D.Dynamics.b2Body;
 import b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
-import { Camera } from "../Camera";
 
 function getRandomNorm() {
     const a = Math.random() * 2 * Math.PI;
@@ -36,7 +35,9 @@ export default function (env: Star.Environment & Planetoid.Environment & Probe.E
             gravitationalConstant: number
         }
     },
-    camera: Camera
+    graphics: {
+        camera: BABYLON.ArcRotateCamera;
+    }
 }) {
     const sol = new Star(env, {
         position: {
