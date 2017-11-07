@@ -1,14 +1,14 @@
+import { adjust } from "../utils";
+
 function create<T extends BABYLON.GUI.Control>(
     constructor: new () => T, 
     parent: BABYLON.GUI.Container | BABYLON.GUI.AdvancedDynamicTexture, 
     ...applyStyles: ((el: T) => void)[]
 ): T {
-    const el = new constructor();
-    for (const applyStyle of applyStyles) {
-        applyStyle(el);
-    }
-    parent.addControl(el);
-    return el;
+    return adjust(
+        new constructor(), 
+        ...applyStyles, 
+        el => parent.addControl(el));
 }
 
 

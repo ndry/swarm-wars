@@ -6,3 +6,13 @@ export function isVisible(elt: Element) {
         && style.display !== 'none'
         && style.visibility !== 'hidden';
 }
+
+export function adjust<T>(
+    x: T, 
+    ...applyAdjustmentList: ((x: T) => void)[]
+): T {
+    for (let applyAdjustment of applyAdjustmentList) {
+        applyAdjustment(x);
+    }
+    return x;
+}
