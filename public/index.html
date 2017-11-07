@@ -28,54 +28,14 @@
         margin  : 0;
         padding : 0;
     }
-    .display {
-        position: absolute; 
-        top: 0; 
-        left: 0;
+    #canvas {
         width: 100%;
         height: 100%;
-        touch-action: none;
-    }
-    #canvas {
-        background-color:#333333;
-        z-index: 1;
-    }
-    #canvas-debug {
-        background-color:rgba(0, 0, 0, 0);
-        z-index: 2;
-        visibility: hidden;
-    }
-    #display {
-        position: relative;
-        width: 500px;
-        height: 500px;
-        display: inline-block;
-    }
-    #gui {
-        background-color: rgba(255, 255, 255, 0.171);
-        padding: 10px;
-        color: white;
-        display: inline-block;
-    }
-    #gui *[type="button"] {
-        display: block;
     }
 </style>
 
 </head>
 <body>
-
-    <div id="display">
-            <canvas id="canvas" class="display"></canvas>
-            <canvas id="canvas-debug" class="display"></canvas>
-    </div>
-    <div id="gui">
-            <div id="fps-label"></div>
-            <div id="body-count-label"></div>
-            <input id="pause-button" type="button" value="Pause" />
-            <input id="track-rotation-button" type="button" value="Track rotation" />
-            <input id="step-button" type="button" value="Step" />
-            <input id="toggle-gravity-button" type="button" value="Toggle gravity" />
-        </div>    
+    <canvas id="canvas"></canvas>
 </body>
 </html>

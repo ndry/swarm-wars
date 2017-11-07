@@ -44,6 +44,16 @@ export class GuiView {
         GuiView.defaultTextBlockStyle
     );
 
+    populationLabel = create(
+        BABYLON.GUI.TextBlock,
+        this.panel,
+        GuiView.defaultTextBlockStyle,
+        t => {
+            t.height = "100px";
+            t.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        }
+    );
+
     pauseButton = create(
         BABYLON.GUI.Button, 
         this.panel, 

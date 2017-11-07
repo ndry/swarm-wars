@@ -95,6 +95,7 @@ export class Enviornment {
         this.graphics.guiView.bodyCountLabel.text = `Bodies: ${this.physics.world.GetBodyCount()}`;
         this.graphics.guiView.fpsLabel.text = `FPS ${this.fpsTracker.fps && this.fpsTracker.fps.toFixed(2)}`
             + ` / UPS ${this.upsTracker.fps && this.upsTracker.fps.toFixed(2)}`;
+        this.graphics.guiView.populationLabel.text = JSON.stringify(this.physics.military.population, null, 4);
     }
 
     run() {

@@ -29,7 +29,10 @@ export namespace Probe {
 
 export class Probe {
     
-    state: Military.State = {
+    state: Military.Unit = {
+        _isMilitaryUnit_32f06fe34e8b40479c503df3a4d09997: true,
+        energyDelta: 0,
+        isEnergyAvailable: false,
         hitPoints: 100,
         attack: 10,
         defense: 10,
