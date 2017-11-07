@@ -148,16 +148,13 @@ System.register("utils", [], function (exports_5, context_5) {
         }
     };
 });
-System.register("Star", ["box2dweb", "babylonjs"], function (exports_6, context_6) {
+System.register("Star", ["box2dweb"], function (exports_6, context_6) {
     var __moduleName = context_6 && context_6.id;
-    var box2dweb_3, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, babylonjs_1, Star;
+    var box2dweb_3, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Star;
     return {
         setters: [
             function (box2dweb_3_1) {
                 box2dweb_3 = box2dweb_3_1;
-            },
-            function (babylonjs_1_1) {
-                babylonjs_1 = babylonjs_1_1;
             }
         ],
         execute: function () {
@@ -185,25 +182,25 @@ System.register("Star", ["box2dweb", "babylonjs"], function (exports_6, context_
                         fixDef.shape = new b2CircleShape(args.radius);
                         return fixDef;
                     })());
-                    this.mesh = babylonjs_1.default.MeshBuilder.CreateSphere("", { segments: 4, diameter: args.radius * 2 }, this.env.graphics.scene);
-                    const m = new babylonjs_1.default.StandardMaterial("", env.graphics.scene);
-                    m.emissiveColor = new babylonjs_1.default.Color3(1, 1, 1);
+                    this.mesh = BABYLON.MeshBuilder.CreateSphere("", { segments: 4, diameter: args.radius * 2 }, this.env.graphics.scene);
+                    const m = new BABYLON.StandardMaterial("", env.graphics.scene);
+                    m.emissiveColor = new BABYLON.Color3(1, 1, 1);
                     this.mesh.material = m;
-                    this.light = new babylonjs_1.default.PointLight("", new babylonjs_1.default.Vector3(0, 0, 0), this.env.graphics.scene);
-                    this.mesh.outlineColor = new babylonjs_1.default.Color3(0, 0, 1);
+                    this.light = new BABYLON.PointLight("", new BABYLON.Vector3(0, 0, 0), this.env.graphics.scene);
+                    this.mesh.outlineColor = new BABYLON.Color3(0, 0, 1);
                     this.mesh.outlineWidth = .05;
-                    this.mesh.actionManager = new babylonjs_1.default.ActionManager(this.env.graphics.scene);
-                    this.mesh.actionManager.registerAction(new babylonjs_1.default.ExecuteCodeAction(babylonjs_1.default.ActionManager.OnPointerOverTrigger, evt => {
+                    this.mesh.actionManager = new BABYLON.ActionManager(this.env.graphics.scene);
+                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, evt => {
                         this.mesh.renderOutline = true;
                     }));
-                    this.mesh.actionManager.registerAction(new babylonjs_1.default.ExecuteCodeAction(babylonjs_1.default.ActionManager.OnPointerOutTrigger, evt => {
+                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, evt => {
                         this.mesh.renderOutline = false;
                     }));
-                    this.mesh.actionManager.registerAction(new babylonjs_1.default.ExecuteCodeAction(babylonjs_1.default.ActionManager.OnPickTrigger, evt => {
+                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, evt => {
                         this.env.graphics.camera.lockedTarget = this.mesh;
                     }));
-                    this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
-                    this.renderSubscription = env.renderEvent.subscribe(() => this.render());
+                    this.updateSubscription = env.updateObservable.subscribe(dt => this.update(dt));
+                    this.renderSubscription = env.renderObservable.subscribe(() => this.render());
                 }
                 update(dt) {
                 }
@@ -219,16 +216,13 @@ System.register("Star", ["box2dweb", "babylonjs"], function (exports_6, context_
         }
     };
 });
-System.register("Planetoid", ["box2dweb", "babylonjs"], function (exports_7, context_7) {
+System.register("Planetoid", ["box2dweb"], function (exports_7, context_7) {
     var __moduleName = context_7 && context_7.id;
-    var box2dweb_4, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, babylonjs_2, Planetoid;
+    var box2dweb_4, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Planetoid;
     return {
         setters: [
             function (box2dweb_4_1) {
                 box2dweb_4 = box2dweb_4_1;
-            },
-            function (babylonjs_2_1) {
-                babylonjs_2 = babylonjs_2_1;
             }
         ],
         execute: function () {
@@ -256,24 +250,24 @@ System.register("Planetoid", ["box2dweb", "babylonjs"], function (exports_7, con
                         fixDef.shape = new b2CircleShape(args.radius);
                         return fixDef;
                     })());
-                    this.mesh = babylonjs_2.default.MeshBuilder.CreateSphere("", { segments: 4, diameter: args.radius * 2 }, this.env.graphics.scene);
-                    const m = new babylonjs_2.default.StandardMaterial("", env.graphics.scene);
-                    m.diffuseColor = new babylonjs_2.default.Color3(.5, .5, .5);
+                    this.mesh = BABYLON.MeshBuilder.CreateSphere("", { segments: 4, diameter: args.radius * 2 }, this.env.graphics.scene);
+                    const m = new BABYLON.StandardMaterial("", env.graphics.scene);
+                    m.diffuseColor = new BABYLON.Color3(.5, .5, .5);
                     this.mesh.material = m;
-                    this.mesh.outlineColor = new babylonjs_2.default.Color3(0, 0, 1);
+                    this.mesh.outlineColor = new BABYLON.Color3(0, 0, 1);
                     this.mesh.outlineWidth = .05;
-                    this.mesh.actionManager = new babylonjs_2.default.ActionManager(this.env.graphics.scene);
-                    this.mesh.actionManager.registerAction(new babylonjs_2.default.ExecuteCodeAction(babylonjs_2.default.ActionManager.OnPointerOverTrigger, evt => {
+                    this.mesh.actionManager = new BABYLON.ActionManager(this.env.graphics.scene);
+                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, evt => {
                         this.mesh.renderOutline = true;
                     }));
-                    this.mesh.actionManager.registerAction(new babylonjs_2.default.ExecuteCodeAction(babylonjs_2.default.ActionManager.OnPointerOutTrigger, evt => {
+                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, evt => {
                         this.mesh.renderOutline = false;
                     }));
-                    this.mesh.actionManager.registerAction(new babylonjs_2.default.ExecuteCodeAction(babylonjs_2.default.ActionManager.OnPickTrigger, evt => {
+                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, evt => {
                         this.env.graphics.camera.lockedTarget = this.mesh;
                     }));
-                    this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
-                    this.renderSubscription = env.renderEvent.subscribe(() => this.render());
+                    this.updateSubscription = env.updateObservable.subscribe(dt => this.update(dt));
+                    this.renderSubscription = env.renderObservable.subscribe(() => this.render());
                 }
                 update(dt) {
                 }
@@ -287,16 +281,13 @@ System.register("Planetoid", ["box2dweb", "babylonjs"], function (exports_7, con
         }
     };
 });
-System.register("Probe", ["box2dweb", "babylonjs"], function (exports_8, context_8) {
+System.register("Probe", ["box2dweb"], function (exports_8, context_8) {
     var __moduleName = context_8 && context_8.id;
-    var box2dweb_5, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, babylonjs_3, Probe;
+    var box2dweb_5, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Probe;
     return {
         setters: [
             function (box2dweb_5_1) {
                 box2dweb_5 = box2dweb_5_1;
-            },
-            function (babylonjs_3_1) {
-                babylonjs_3 = babylonjs_3_1;
             }
         ],
         execute: function () {
@@ -325,24 +316,24 @@ System.register("Probe", ["box2dweb", "babylonjs"], function (exports_8, context
                         fixDef.shape = new b2CircleShape(args.radius);
                         return fixDef;
                     })());
-                    this.mesh = babylonjs_3.default.MeshBuilder.CreateSphere("", { segments: 4, diameter: args.radius * 2 }, this.env.graphics.scene);
-                    const m = new babylonjs_3.default.StandardMaterial("", env.graphics.scene);
+                    this.mesh = BABYLON.MeshBuilder.CreateSphere("", { segments: 4, diameter: args.radius * 2 }, this.env.graphics.scene);
+                    const m = new BABYLON.StandardMaterial("", env.graphics.scene);
                     m.diffuseColor = args.color;
                     this.mesh.material = m;
-                    this.mesh.outlineColor = new babylonjs_3.default.Color3(0, 0, 1);
+                    this.mesh.outlineColor = new BABYLON.Color3(0, 0, 1);
                     this.mesh.outlineWidth = .05;
-                    this.mesh.actionManager = new babylonjs_3.default.ActionManager(this.env.graphics.scene);
-                    this.mesh.actionManager.registerAction(new babylonjs_3.default.ExecuteCodeAction(babylonjs_3.default.ActionManager.OnPointerOverTrigger, evt => {
+                    this.mesh.actionManager = new BABYLON.ActionManager(this.env.graphics.scene);
+                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, evt => {
                         this.mesh.renderOutline = true;
                     }));
-                    this.mesh.actionManager.registerAction(new babylonjs_3.default.ExecuteCodeAction(babylonjs_3.default.ActionManager.OnPointerOutTrigger, evt => {
+                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, evt => {
                         this.mesh.renderOutline = false;
                     }));
-                    this.mesh.actionManager.registerAction(new babylonjs_3.default.ExecuteCodeAction(babylonjs_3.default.ActionManager.OnPickTrigger, evt => {
+                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, evt => {
                         this.env.graphics.camera.lockedTarget = this.mesh;
                     }));
-                    this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
-                    this.renderSubscription = env.renderEvent.subscribe(() => this.render());
+                    this.updateSubscription = env.updateObservable.subscribe(dt => this.update(dt));
+                    this.renderSubscription = env.renderObservable.subscribe(() => this.render());
                 }
                 update(dt) {
                     if (Math.random() < .001) {
@@ -373,7 +364,7 @@ System.register("Probe", ["box2dweb", "babylonjs"], function (exports_8, context
         }
     };
 });
-System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb", "babylonjs"], function (exports_9, context_9) {
+System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb"], function (exports_9, context_9) {
     var __moduleName = context_9 && context_9.id;
     function getRandomNorm() {
         const a = Math.random() * 2 * Math.PI;
@@ -489,14 +480,14 @@ System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb", "babylo
                 angle: Math.random() * 2 * Math.PI,
                 angularVelocity: 20 * (Math.random() - 0.5),
                 radius: .2 + Math.random() * .05,
-                color: i % 2 ? new babylonjs_4.default.Color3(1, 0, 0) : new babylonjs_4.default.Color3(0, 1, 0),
+                color: i % 2 ? new BABYLON.Color3(1, 0, 0) : new BABYLON.Color3(0, 1, 0),
                 density: .005
             });
         }
         env.graphics.camera.lockedTarget = earth.mesh;
     }
     exports_9("default", default_1);
-    var Star_1, Planetoid_1, Probe_1, box2dweb_6, b2Vec2, babylonjs_4;
+    var Star_1, Planetoid_1, Probe_1, box2dweb_6, b2Vec2;
     return {
         setters: [
             function (Star_1_1) {
@@ -510,9 +501,6 @@ System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb", "babylo
             },
             function (box2dweb_6_1) {
                 box2dweb_6 = box2dweb_6_1;
-            },
-            function (babylonjs_4_1) {
-                babylonjs_4 = babylonjs_4_1;
             }
         ],
         execute: function () {
@@ -520,9 +508,9 @@ System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb", "babylo
         }
     };
 });
-System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb", "FpsTracker", "babylonjs", "Camera", "utils", "maps/map01"], function (exports_10, context_10) {
+System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb", "FpsTracker", "Camera", "utils", "maps/map01"], function (exports_10, context_10) {
     var __moduleName = context_10 && context_10.id;
-    var underscore_1, Rx_1, Physics_1, box2dweb_7, b2DebugDraw, FpsTracker_1, babylonjs_5, Camera_1, utils_1, Enviornment, env, map01_1;
+    var underscore_1, Rx_1, Physics_1, box2dweb_7, b2DebugDraw, FpsTracker_1, Camera_1, utils_1, Enviornment, env, map01_1;
     return {
         setters: [
             function (underscore_1_1) {
@@ -539,9 +527,6 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
             },
             function (FpsTracker_1_1) {
                 FpsTracker_1 = FpsTracker_1_1;
-            },
-            function (babylonjs_5_1) {
-                babylonjs_5 = babylonjs_5_1;
             },
             function (Camera_1_1) {
                 Camera_1 = Camera_1_1;
@@ -576,8 +561,8 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
                         scene: null,
                         camera: null
                     };
-                    this.updateEvent = new Rx_1.default.Subject();
-                    this.renderEvent = new Rx_1.default.Subject();
+                    this.updateObservable = new Rx_1.default.Subject();
+                    this.renderObservable = new Rx_1.default.Subject();
                     this.camera = new Camera_1.Camera(this);
                     this.isPaused = false;
                     this.renderIterationEvent = new Rx_1.default.Subject();
@@ -593,9 +578,9 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
                     underscore_1.default.bindAll(this, "adjustDisplay");
                     this.canvas.addEventListener("contextmenu", ev => ev.preventDefault());
                     this.canvasDebug.addEventListener("contextmenu", ev => ev.preventDefault());
-                    this.graphics.engine = new babylonjs_5.default.Engine(this.canvas, true);
-                    this.graphics.scene = new babylonjs_5.default.Scene(this.graphics.engine);
-                    const camera = new babylonjs_5.default.ArcRotateCamera('camera1', Math.PI / 2, 0, 100, new babylonjs_5.default.Vector3(0, 0, 0), this.graphics.scene);
+                    this.graphics.engine = new BABYLON.Engine(this.canvas, true);
+                    this.graphics.scene = new BABYLON.Scene(this.graphics.engine);
+                    const camera = new BABYLON.ArcRotateCamera('camera1', Math.PI / 2, 0, 100, new BABYLON.Vector3(0, 0, 0), this.graphics.scene);
                     camera.lowerRadiusLimit = 2;
                     camera.upperRadiusLimit = 50000;
                     this.graphics.camera = camera;
@@ -607,6 +592,17 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
                     // this.graphics.camera.orthoRight = halfWidth;
                     // this.graphics.camera.orthoTop = -halfWidth / ratio;
                     // this.graphics.camera.orthoBottom = halfWidth / ratio;
+                    var gui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+                    var button1 = BABYLON.GUI.Button.CreateSimpleButton("", "Pause");
+                    button1.width = "150px";
+                    button1.height = "40px";
+                    button1.color = "white";
+                    button1.cornerRadius = 20;
+                    button1.background = "green";
+                    button1.onPointerUpObservable.add(() => {
+                        this.isPaused = !this.isPaused;
+                    });
+                    gui.addControl(button1);
                     this.pauseButton.addEventListener("click", () => this.isPaused = !this.isPaused);
                     this.trackRotationButton.addEventListener("click", () => this.camera.trackRotation = !this.camera.trackRotation);
                     this.stepButton.addEventListener("click", () => this.update(1 / 60));
@@ -636,10 +632,10 @@ System.register("main", ["underscore", "rxjs/Rx", "physics/Physics", "box2dweb",
                 }
                 update(dt) {
                     this.physics.update(dt);
-                    this.updateEvent.next(dt);
+                    this.updateObservable.next(dt);
                 }
                 render(dt) {
-                    this.renderEvent.next(dt);
+                    this.renderObservable.next(dt);
                     this.camera.render();
                     this.graphics.scene.render();
                     if (this.canvasDebug && utils_1.isVisible(this.canvasDebug)) {

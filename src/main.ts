@@ -7,8 +7,6 @@ import Box2D from "box2dweb";
 import b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
 
 import { FpsTracker } from "./FpsTracker";
-import BABYLON from "babylonjs";
-
 import { Camera } from "./Camera";
 import { isVisible } from "./utils";
 
@@ -38,8 +36,8 @@ class Enviornment {
     };
 
 
-    updateEvent = new Rx.Subject<number>();
-    renderEvent = new Rx.Subject<number>();
+    updateObservable = new Rx.Subject<number>();
+    renderObservable = new Rx.Subject<number>();
 
 
     camera = new Camera(this);
@@ -88,6 +86,20 @@ class Enviornment {
         // this.graphics.camera.orthoBottom = halfWidth / ratio;
 
 
+        var gui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        
+        var button1 = BABYLON.GUI.Button.CreateSimpleButton("", "Pause");
+        button1.width = "150px"
+        button1.height = "40px";
+        button1.color = "white";
+        button1.cornerRadius = 20;
+        button1.background = "green";
+        button1.onPointerUpObservable.add(() => {
+            this.isPaused = !this.isPaused
+        });
+        gui.addControl(button1); 
+
+
         this.pauseButton.addEventListener("click", () => this.isPaused = !this.isPaused);
         this.trackRotationButton.addEventListener("click", () => this.camera.trackRotation = !this.camera.trackRotation);
         this.stepButton.addEventListener("click", () => this.update(1 / 60));
@@ -126,11 +138,11 @@ class Enviornment {
 
     update(dt: number) {
         this.physics.update(dt);
-        this.updateEvent.next(dt);
+        this.updateObservable.next(dt);
     }
 
     render(dt: number) {
-        this.renderEvent.next(dt);
+        this.renderObservable.next(dt);
         
         this.camera.render();
         this.graphics.scene.render();

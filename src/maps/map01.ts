@@ -8,7 +8,6 @@ import b2World = Box2D.Dynamics.b2World;
 import b2Body = Box2D.Dynamics.b2Body;
 import b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
 import { Camera } from "../Camera";
-import BABYLON from "babylonjs";
 
 function getRandomNorm() {
     const a = Math.random() * 2 * Math.PI;

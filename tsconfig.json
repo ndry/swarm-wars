@@ -17,6 +17,8 @@
         "noUnusedParameters": false
     },
     "include": [
+        "./node_modules/babylonjs/dist/preview release/babylon.d.ts",
+        "./node_modules/babylonjs-gui/babylon.gui.d.ts",
         "./src/**/*"
     ]
 }

@@ -6,8 +6,6 @@ import b2Body = Box2D.Dynamics.b2Body;
 import b2Fixture = Box2D.Dynamics.b2Fixture;
 import b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
 
-import BABYLON from "babylonjs";
-
 import Rx from 'rxjs/Rx';
 import { Camera } from "./Camera";
 
@@ -21,8 +19,8 @@ export namespace Probe {
             camera: BABYLON.ArcRotateCamera;
         }
         pixelsPerMeter: number,
-        updateEvent: Rx.Observable<number>,
-        renderEvent: Rx.Observable<number>,
+        updateObservable: Rx.Observable<number>,
+        renderObservable: Rx.Observable<number>,
         camera: Camera
     }
 }
@@ -90,8 +88,8 @@ export class Probe {
         }));
         
         
-        this.updateSubscription = env.updateEvent.subscribe(dt => this.update(dt));
-        this.renderSubscription = env.renderEvent.subscribe(() => this.render());
+        this.updateSubscription = env.updateObservable.subscribe(dt => this.update(dt));
+        this.renderSubscription = env.renderObservable.subscribe(() => this.render());
     }
 
     update(dt: number) {
