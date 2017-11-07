@@ -6,9 +6,10 @@ import { Physics } from "./physics/Physics";
 import Box2D from "box2dweb";
 import b2DebugDraw = Box2D.Dynamics.b2DebugDraw;
 
-import { FpsTracker } from "./FpsTracker";
 import { Camera } from "./Camera";
 import { isVisible } from "./utils";
+import { FpsTracker } from "./FpsTracker";
+import { GraphicsEnvionment } from "./graphics/GraphicsEnvironment";
 
 class Enviornment {
     physics = new Physics();
@@ -22,19 +23,10 @@ class Enviornment {
     canvas = document.getElementById("canvas") as HTMLCanvasElement;
     canvasDebug = document.getElementById("canvas-debug") as HTMLCanvasElement;
     debugCtx = this.canvasDebug.getContext("2d");
-    fpsLabel = document.getElementById("fps-label");
-    bodyCountLabel = document.getElementById("body-count-label");
-    pauseButton = document.getElementById("pause-button") as HTMLButtonElement;
-    trackRotationButton = document.getElementById("track-rotation-button") as HTMLButtonElement;
-    stepButton = document.getElementById("step-button") as HTMLButtonElement;
-    toggleGravityButton = document.getElementById("toggle-gravity-button") as HTMLButtonElement;
+    
+    graphics = new GraphicsEnvionment(this);
 
-    graphics = {
-        engine: null as BABYLON.Engine,
-        scene: null as BABYLON.Scene,
-        camera: null as BABYLON.ArcRotateCamera
-    };
-
+    
 
     updateObservable = new Rx.Subject<number>();
     renderObservable = new Rx.Subject<number>();
@@ -62,19 +54,7 @@ class Enviornment {
 
         this.canvas.addEventListener("contextmenu", ev => ev.preventDefault());
         this.canvasDebug.addEventListener("contextmenu", ev => ev.preventDefault());
-        
-        this.graphics.engine = new BABYLON.Engine(this.canvas, true);
 
-        this.graphics.scene = new BABYLON.Scene(this.graphics.engine);
-        
-        const camera = new BABYLON.ArcRotateCamera('camera1', Math.PI / 2, 0, 100, new BABYLON.Vector3(0, 0, 0), this.graphics.scene);
-        camera.lowerRadiusLimit = 2;
-        camera.upperRadiusLimit = 50000;
-
-
-
-        this.graphics.camera = camera;
-        this.graphics.camera.attachControl(this.canvas, false);
 
 
         // this.graphics.camera.mode = BABYLON.Camera.ORTHOGRAPHIC_CAMERA;
@@ -86,24 +66,17 @@ class Enviornment {
         // this.graphics.camera.orthoBottom = halfWidth / ratio;
 
 
-        var gui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-        
-        var button1 = BABYLON.GUI.Button.CreateSimpleButton("", "Pause");
-        button1.width = "150px"
-        button1.height = "40px";
-        button1.color = "white";
-        button1.cornerRadius = 20;
-        button1.background = "green";
-        button1.onPointerUpObservable.add(() => {
-            this.isPaused = !this.isPaused
+        this.graphics.guiView.pauseButton.onPointerUpObservable.add(() => {
+            this.isPaused = !this.isPaused;
         });
-        gui.addControl(button1); 
 
+        this.graphics.guiView.stepButton.onPointerUpObservable.add(() => {
+            this.update(1 / 60);
+        });
 
-        this.pauseButton.addEventListener("click", () => this.isPaused = !this.isPaused);
-        this.trackRotationButton.addEventListener("click", () => this.camera.trackRotation = !this.camera.trackRotation);
-        this.stepButton.addEventListener("click", () => this.update(1 / 60));
-        this.toggleGravityButton.addEventListener("click", () => this.physics.isGravityOn = !this.physics.isGravityOn);
+        this.graphics.guiView.toggleGravityButton.onPointerUpObservable.add(() => {
+            this.physics.isGravityOn = !this.physics.isGravityOn
+        });
 
         window.addEventListener("resize", this.adjustDisplay);
         this.adjustDisplay();
@@ -178,8 +151,8 @@ class Enviornment {
             this.debugCtx.restore();
         }
         
-        this.bodyCountLabel.innerText = `Bodies: ${this.physics.world.GetBodyCount()}`;
-        this.fpsLabel.innerText = `FPS ${this.fpsTracker.fps && this.fpsTracker.fps.toFixed(2)}`
+        this.graphics.guiView.bodyCountLabel.text = `Bodies: ${this.physics.world.GetBodyCount()}`;
+        this.graphics.guiView.fpsLabel.text = `FPS ${this.fpsTracker.fps && this.fpsTracker.fps.toFixed(2)}`
             + ` / UPS ${this.upsTracker.fps && this.upsTracker.fps.toFixed(2)}`;
     }
 
