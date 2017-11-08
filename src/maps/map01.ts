@@ -88,7 +88,7 @@ export default function (env: Star.Environment & Planetoid.Environment & Probe.E
         }
     }
 
-    const asteroidCount = 500 + 100 + Math.random() * 30;
+    const asteroidCount = 1500 + 100 + Math.random() * 30;
     for (let i = 0; i < asteroidCount; i++) {
         const position = getRandomPolarVec2(asteroidBeltDist * 0.95, asteroidBeltDist * 1.05);
         position.Add(sol.body.GetPosition());

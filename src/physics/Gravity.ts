@@ -4,6 +4,7 @@ import b2Vec2 = Box2D.Common.Math.b2Vec2;
 import b2World = Box2D.Dynamics.b2World;
 import b2Body = Box2D.Dynamics.b2Body;
 import { adjust } from "../utils";
+import { Chunk, ChunkManager } from "./ChunkManager";
 
 export class Gravity {
     gravitationalConstant: number;
@@ -16,124 +17,75 @@ export class Gravity {
     }
 
     chunkSide = 10;
-    chunks: Map<string, {
-        x: number,
-        y: number,
-        cx: number,
-        cy: number,
-        bodies: b2Body[],
+    chunkManager: ChunkManager<b2Body>;
+    f: WeakMap<Chunk<b2Body>, {
         centerOfMass: b2Vec2,
         mass: number,
         gravitationalAcceleration: b2Vec2
     }>;
-    c(x: number) {
-        return Math.round(x / this.chunkSide) * this.chunkSide;
-    }
-
-    ccid(cx: number, cy: number) {
-        return `chunkSide = ${this.chunkSide}`
-        + `; x = ${cx}` 
-        + `; y = ${cy}`;
-    }
-    cid(x: number, y: number) {
-        return `chunkSide = ${this.chunkSide}`
-        + `; x = ${this.c(x)}` 
-        + `; y = ${this.c(y)}`;
-    }
 
     populateChunks() {
-        this.chunks = new Map<string, {
-            x: number,
-            y: number,
-            cx: number,
-            cy: number,
-            bodies: b2Body[],
+        this.f = new WeakMap<Chunk<b2Body>, {
             centerOfMass: b2Vec2,
             mass: number,
             gravitationalAcceleration: b2Vec2
         }>();
 
+        this.chunkManager = new ChunkManager(this.chunkSide);
+
         for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
-            const chunkId = this.cid(thisBody.GetPosition().x, thisBody.GetPosition().y);
-            
-            const chunk = this.chunks.has(chunkId) ? this.chunks.get(chunkId) : adjust({
-                x: thisBody.GetPosition().x,
-                y: thisBody.GetPosition().y,
-                cx: this.c(thisBody.GetPosition().x),
-                cy: this.c(thisBody.GetPosition().y),
-                bodies: [],
+            this.chunkManager.put(thisBody.GetPosition().x, thisBody.GetPosition().y, thisBody);
+        }
+
+        for (let chunk of this.chunkManager.chunks.values()) {
+            this.f.set(chunk, {
                 centerOfMass: new b2Vec2(),
                 mass: 0,
                 gravitationalAcceleration: new b2Vec2()
-            }, c => this.chunks.set(chunkId, c));
-            
-            chunk.bodies.push(thisBody);
-        }
-
-        for (let chunk of this.chunks.values()) {
-            for (let body of chunk.bodies) {
+            });
+            const data = this.f.get(chunk);
+            for (let body of chunk.entries) {
                 const tmp = new b2Vec2();
                 tmp.SetV(body.GetWorldCenter());
                 tmp.Multiply(body.GetMass());
-                chunk.centerOfMass.Add(tmp);
-                chunk.mass += body.GetMass();
+                data.centerOfMass.Add(tmp);
+                data.mass += body.GetMass();
             }
-            chunk.centerOfMass.Multiply(1 / chunk.mass);
+            data.centerOfMass.Multiply(1 / data.mass);
         }
 
-        for (let thisChunk of this.chunks.values()) {
-            for (let otherChunk of this.chunks.values()) {
-                if (Math.abs(thisChunk.cx - otherChunk.cx) <= 2 * this.chunkSide && Math.abs(thisChunk.cy - otherChunk.cy) <= 2 * this.chunkSide) {
+        for (let thisChunk of this.chunkManager.chunks.values()) {
+            const thisData = this.f.get(thisChunk);
+            for (let otherChunk of this.chunkManager.chunks.values()) {
+                const otherData = this.f.get(otherChunk);
+
+                if (Math.abs(thisChunk.position.x - otherChunk.position.x) <= 2 * this.chunkSide
+                 && Math.abs(thisChunk.position.y - otherChunk.position.y) <= 2 * this.chunkSide) {
                     continue;
                 }
 
                 const g = new b2Vec2();
-                g.SetV(otherChunk.centerOfMass);
-                g.Subtract(thisChunk.centerOfMass);
+                g.SetV(otherData.centerOfMass);
+                g.Subtract(otherData.centerOfMass);
                 const dstLen = g.Normalize();
                 if (dstLen > 0) {
-                    g.Multiply(this.gravitationalConstant * otherChunk.mass / (dstLen * dstLen));
-                    thisChunk.gravitationalAcceleration.Add(g);
+                    g.Multiply(this.gravitationalConstant * otherData.mass / (dstLen * dstLen));
+                    thisData.gravitationalAcceleration.Add(g);
                 }
             }
         }
     }
 
     applyForces(dt: number) {
-        const _this = this;
-        const f = function* (x: number, y: number, r: number) {
-            for (let cx = _this.c(x-r); cx <= _this.c(x+r); cx += _this.chunkSide) {
-                for (let cy = _this.c(y-r); cy <= _this.c(y+r); cy += _this.chunkSide) {
-                    const c = _this.chunks.get(_this.cid(cx, cy));
-                    if (!c) { continue; }
-                    for (let body of c.bodies) {
-                        const dx = body.GetPosition().x - x;
-                        const dy = body.GetPosition().y - y;
-                        if (dx*dx + dy*dy > r*r) { continue; }
-                        yield body;
-                    }
-                }   
-            }
-        }
-
-        const cf = function* (ccx: number, ccy: number, cr: number) {
-            for (let cx = ccx-cr; cx <= ccx+cr; cx += 1) {
-                for (let cy = ccy-cr; cy <= ccy+cr; cy += 1) {
-                    const c = _this.chunks.get(_this.cid(cx * _this.chunkSide, cy * _this.chunkSide));
-                    if (!c) { continue; }
-                    yield* c.bodies;
-                }   
-            }
-        }
-
         const dst = new b2Vec2(0, 0);
         for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
-            const thisChunk = this.chunks.get(this.cid(thisBody.GetPosition().x, thisBody.GetPosition().y));
-            dst.SetV(thisChunk.gravitationalAcceleration);
+            const thisChunk = this.chunkManager.getChunk(thisBody.GetPosition().x, thisBody.GetPosition().y);
+            const thisData = this.f.get(thisChunk);
+            dst.SetV(thisData.gravitationalAcceleration);
             dst.Multiply(thisBody.GetMass());
             thisBody.ApplyForce(dst, thisBody.GetWorldCenter());
 
-            for (let otherBody of cf(this.c(thisBody.GetPosition().x), this.c(thisBody.GetPosition().y), 2)) {
+            for (let otherBody of this.chunkManager.enumerateSquare(thisBody.GetPosition().x, thisBody.GetPosition().y, 2)) {
                 if (thisBody === otherBody) { continue; }
                 dst.SetV(otherBody.GetWorldCenter());
                 dst.Subtract(thisBody.GetWorldCenter());
