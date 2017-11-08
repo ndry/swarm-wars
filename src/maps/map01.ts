@@ -88,7 +88,7 @@ export default function (env: Star.Environment & Planetoid.Environment & Probe.E
         }
     }
 
-    const asteroidCount = 100 + Math.random() * 30;
+    const asteroidCount = 500 + 100 + Math.random() * 30;
     for (let i = 0; i < asteroidCount; i++) {
         const position = getRandomPolarVec2(asteroidBeltDist * 0.95, asteroidBeltDist * 1.05);
         position.Add(sol.body.GetPosition());
@@ -137,7 +137,7 @@ export default function (env: Star.Environment & Planetoid.Environment & Probe.E
     
     const earth = closePlanets[Math.floor(Math.random() * closePlanets.length)];
 
-    const probeCount = Math.random() * 10 * 2;
+    const probeCount = 0; Math.random() * 10 * 2;
     for (let i = 1; i < probeCount; i++) {
         const position = getRandomPolarVec2(1, 20);
         position.Add(earth.body.GetPosition());

@@ -15,6 +15,7 @@ export class Military {
 
     update(dt: number) {
         this.population = {};
+        return;
         const dst = new b2Vec2(0, 0);
         for (var thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
             const thisState = thisBody.GetUserData();

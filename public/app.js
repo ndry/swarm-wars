@@ -1,10 +1,37 @@
-System.register("physics/Gravity", ["box2dweb"], function (exports_1, context_1) {
+System.register("utils", [], function (exports_1, context_1) {
     var __moduleName = context_1 && context_1.id;
-    var box2dweb_1, b2Vec2, Gravity;
+    function isVisible(elt) {
+        var style = window.getComputedStyle(elt);
+        return +style.width !== 0
+            && +style.height !== 0
+            && +style.opacity !== 0
+            && style.display !== 'none'
+            && style.visibility !== 'hidden';
+    }
+    exports_1("isVisible", isVisible);
+    function adjust(x, ...applyAdjustmentList) {
+        for (let applyAdjustment of applyAdjustmentList) {
+            applyAdjustment(x);
+        }
+        return x;
+    }
+    exports_1("adjust", adjust);
+    return {
+        setters: [],
+        execute: function () {
+        }
+    };
+});
+System.register("physics/Gravity", ["box2dweb", "utils"], function (exports_2, context_2) {
+    var __moduleName = context_2 && context_2.id;
+    var box2dweb_1, b2Vec2, utils_1, Gravity;
     return {
         setters: [
             function (box2dweb_1_1) {
                 box2dweb_1 = box2dweb_1_1;
+            },
+            function (utils_1_1) {
+                utils_1 = utils_1_1;
             }
         ],
         execute: function () {
@@ -12,32 +39,126 @@ System.register("physics/Gravity", ["box2dweb"], function (exports_1, context_1)
             Gravity = class Gravity {
                 constructor(world, gravitationalConstant = 10) {
                     this.world = world;
+                    this.chunkSide = 15;
                     this.gravitationalConstant = gravitationalConstant;
                 }
-                update(dt) {
-                    const dst = new b2Vec2(0, 0);
-                    for (var thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
-                        for (var otherBody = this.world.GetBodyList(); otherBody; otherBody = otherBody.GetNext()) {
-                            if (thisBody === otherBody) {
+                c(x) {
+                    return Math.round(x / this.chunkSide) * this.chunkSide;
+                }
+                ccid(cx, cy) {
+                    return `chunkSide = ${this.chunkSide}`
+                        + `; x = ${cx}`
+                        + `; y = ${cy}`;
+                }
+                cid(x, y) {
+                    return `chunkSide = ${this.chunkSide}`
+                        + `; x = ${this.c(x)}`
+                        + `; y = ${this.c(y)}`;
+                }
+                populateChunks() {
+                    this.chunks = new Map();
+                    for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
+                        const chunkId = this.cid(thisBody.GetPosition().x, thisBody.GetPosition().y);
+                        const chunk = this.chunks.has(chunkId) ? this.chunks.get(chunkId) : utils_1.adjust({
+                            x: thisBody.GetPosition().x,
+                            y: thisBody.GetPosition().y,
+                            cx: this.c(thisBody.GetPosition().x),
+                            cy: this.c(thisBody.GetPosition().y),
+                            bodies: [],
+                            centerOfMass: new b2Vec2(),
+                            mass: 0,
+                            gravitationalAcceleration: new b2Vec2()
+                        }, c => this.chunks.set(chunkId, c));
+                        chunk.bodies.push(thisBody);
+                    }
+                    for (let chunk of this.chunks.values()) {
+                        for (let body of chunk.bodies) {
+                            const tmp = new b2Vec2();
+                            tmp.SetV(body.GetWorldCenter());
+                            tmp.Multiply(body.GetMass());
+                            chunk.centerOfMass.Add(tmp);
+                            chunk.mass += body.GetMass();
+                        }
+                        chunk.centerOfMass.Multiply(1 / chunk.mass);
+                    }
+                    for (let thisChunk of this.chunks.values()) {
+                        for (let otherChunk of this.chunks.values()) {
+                            if (Math.abs(thisChunk.cx - otherChunk.cx) <= 1 && Math.abs(thisChunk.cy - otherChunk.cy) <= 1) {
                                 continue;
                             }
-                            dst.SetV(otherBody.GetPosition());
-                            dst.Subtract(thisBody.GetPosition());
-                            const dstLen = dst.Normalize();
+                            const g = new b2Vec2();
+                            g.SetV(otherChunk.centerOfMass);
+                            g.Subtract(thisChunk.centerOfMass);
+                            const dstLen = g.Normalize();
                             if (dstLen > 0) {
-                                dst.Multiply(this.gravitationalConstant * thisBody.GetMass() * otherBody.GetMass() / (dstLen * dstLen));
-                                thisBody.ApplyForce(dst, thisBody.GetPosition());
+                                g.Multiply(this.gravitationalConstant * otherChunk.mass / (dstLen * dstLen));
+                                thisChunk.gravitationalAcceleration.Add(g);
                             }
                         }
                     }
                 }
+                applyForces(dt) {
+                    const _this = this;
+                    const f = function* (x, y, r) {
+                        for (let cx = _this.c(x - r); cx <= _this.c(x + r); cx += _this.chunkSide) {
+                            for (let cy = _this.c(y - r); cy <= _this.c(y + r); cy += _this.chunkSide) {
+                                const c = _this.chunks.get(_this.cid(cx, cy));
+                                if (!c) {
+                                    continue;
+                                }
+                                for (let body of c.bodies) {
+                                    const dx = body.GetPosition().x - x;
+                                    const dy = body.GetPosition().y - y;
+                                    if (dx * dx + dy * dy > r * r) {
+                                        continue;
+                                    }
+                                    yield body;
+                                }
+                            }
+                        }
+                    };
+                    const cf = function* (ccx, ccy, cr) {
+                        for (let cx = ccx - cr; cx <= ccx + cr; cx += 1) {
+                            for (let cy = ccy - cr; cy <= ccy + cr; cy += 1) {
+                                const c = _this.chunks.get(_this.cid(cx * _this.chunkSide, cy * _this.chunkSide));
+                                if (!c) {
+                                    continue;
+                                }
+                                yield* c.bodies;
+                            }
+                        }
+                    };
+                    const dst = new b2Vec2(0, 0);
+                    for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
+                        const thisChunk = this.chunks.get(this.cid(thisBody.GetPosition().x, thisBody.GetPosition().y));
+                        dst.SetV(thisChunk.gravitationalAcceleration);
+                        dst.Multiply(thisBody.GetMass());
+                        thisBody.ApplyForce(dst, thisBody.GetWorldCenter());
+                        for (let otherBody of cf(this.c(thisBody.GetPosition().x), this.c(thisBody.GetPosition().y), 1)) {
+                            if (thisBody === otherBody) {
+                                continue;
+                            }
+                            dst.SetV(otherBody.GetWorldCenter());
+                            dst.Subtract(thisBody.GetWorldCenter());
+                            const dstLen = dst.Normalize();
+                            if (dstLen > 0) {
+                                dst.Multiply(this.gravitationalConstant * thisBody.GetMass() * otherBody.GetMass() / (dstLen * dstLen));
+                                thisBody.ApplyForce(dst, thisBody.GetWorldCenter());
+                            }
+                        }
+                    }
+                }
+                update(dt) {
+                    this.populateChunks();
+                    this.applyForces(dt);
+                }
             };
-            exports_1("Gravity", Gravity);
+            exports_2("Gravity", Gravity);
         }
     };
 });
-System.register("physics/Military", ["box2dweb"], function (exports_2, context_2) {
-    var __moduleName = context_2 && context_2.id;
+System.register("physics/Military", ["box2dweb"], function (exports_3, context_3) {
+    var __moduleName = context_3 && context_3.id;
     var box2dweb_2, b2Vec2, Military;
     return {
         setters: [
@@ -53,6 +174,7 @@ System.register("physics/Military", ["box2dweb"], function (exports_2, context_2
                 }
                 update(dt) {
                     this.population = {};
+                    return;
                     const dst = new b2Vec2(0, 0);
                     for (var thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
                         const thisState = thisBody.GetUserData();
@@ -90,19 +212,19 @@ System.register("physics/Military", ["box2dweb"], function (exports_2, context_2
                     subject.energyDelta -= subject.attack;
                 }
             };
-            exports_2("Military", Military);
+            exports_3("Military", Military);
             (function (Military) {
                 function isUnit(x) {
                     return !!x._isMilitaryUnit_32f06fe34e8b40479c503df3a4d09997;
                 }
                 Military.isUnit = isUnit;
             })(Military || (Military = {}));
-            exports_2("Military", Military);
+            exports_3("Military", Military);
         }
     };
 });
-System.register("physics/Physics", ["box2dweb", "physics/Gravity", "physics/Military"], function (exports_3, context_3) {
-    var __moduleName = context_3 && context_3.id;
+System.register("physics/Physics", ["box2dweb", "physics/Gravity", "physics/Military"], function (exports_4, context_4) {
+    var __moduleName = context_4 && context_4.id;
     var box2dweb_3, b2Vec2, b2World, Gravity_1, Military_1, Physics;
     return {
         setters: [
@@ -135,31 +257,7 @@ System.register("physics/Physics", ["box2dweb", "physics/Gravity", "physics/Mili
                     this.military.update(dt);
                 }
             };
-            exports_3("Physics", Physics);
-        }
-    };
-});
-System.register("utils", [], function (exports_4, context_4) {
-    var __moduleName = context_4 && context_4.id;
-    function isVisible(elt) {
-        var style = window.getComputedStyle(elt);
-        return +style.width !== 0
-            && +style.height !== 0
-            && +style.opacity !== 0
-            && style.display !== 'none'
-            && style.visibility !== 'hidden';
-    }
-    exports_4("isVisible", isVisible);
-    function adjust(x, ...applyAdjustmentList) {
-        for (let applyAdjustment of applyAdjustmentList) {
-            applyAdjustment(x);
-        }
-        return x;
-    }
-    exports_4("adjust", adjust);
-    return {
-        setters: [],
-        execute: function () {
+            exports_4("Physics", Physics);
         }
     };
 });
@@ -193,13 +291,13 @@ System.register("FpsTracker", [], function (exports_5, context_5) {
 System.register("graphics/GuiView", ["utils"], function (exports_6, context_6) {
     var __moduleName = context_6 && context_6.id;
     function create(constructor, parent, ...applyStyles) {
-        return utils_1.adjust(new constructor(), ...applyStyles, el => parent.addControl(el));
+        return utils_2.adjust(new constructor(), ...applyStyles, el => parent.addControl(el));
     }
-    var utils_1, GuiView;
+    var utils_2, GuiView;
     return {
         setters: [
-            function (utils_1_1) {
-                utils_1 = utils_1_1;
+            function (utils_2_1) {
+                utils_2 = utils_2_1;
             }
         ],
         execute: function () {
@@ -258,14 +356,14 @@ System.register("graphics/GuiView", ["utils"], function (exports_6, context_6) {
 });
 System.register("graphics/GraphicsEnvironment", ["graphics/GuiView", "utils"], function (exports_7, context_7) {
     var __moduleName = context_7 && context_7.id;
-    var GuiView_1, utils_2, GraphicsEnvionment;
+    var GuiView_1, utils_3, GraphicsEnvionment;
     return {
         setters: [
             function (GuiView_1_1) {
                 GuiView_1 = GuiView_1_1;
             },
-            function (utils_2_1) {
-                utils_2 = utils_2_1;
+            function (utils_3_1) {
+                utils_3 = utils_3_1;
             }
         ],
         execute: function () {
@@ -273,7 +371,7 @@ System.register("graphics/GraphicsEnvironment", ["graphics/GuiView", "utils"], f
                 constructor(env) {
                     this.env = env;
                     this.engine = new BABYLON.Engine(this.env.canvas, true);
-                    this.scene = utils_2.adjust(new BABYLON.Scene(this.engine), scene => {
+                    this.scene = utils_3.adjust(new BABYLON.Scene(this.engine), scene => {
                         scene.clearColor = new BABYLON.Color4(0.1, 0, 0.1, 1);
                     });
                     this.camera = (() => {
@@ -294,7 +392,7 @@ System.register("graphics/GraphicsEnvironment", ["graphics/GuiView", "utils"], f
 });
 System.register("Environment", ["underscore", "rxjs/Rx", "physics/Physics", "utils", "FpsTracker", "graphics/GraphicsEnvironment"], function (exports_8, context_8) {
     var __moduleName = context_8 && context_8.id;
-    var underscore_1, Rx_1, Physics_1, utils_3, FpsTracker_1, GraphicsEnvironment_1, Enviornment;
+    var underscore_1, Rx_1, Physics_1, utils_4, FpsTracker_1, GraphicsEnvironment_1, Enviornment;
     return {
         setters: [
             function (underscore_1_1) {
@@ -306,8 +404,8 @@ System.register("Environment", ["underscore", "rxjs/Rx", "physics/Physics", "uti
             function (Physics_1_1) {
                 Physics_1 = Physics_1_1;
             },
-            function (utils_3_1) {
-                utils_3 = utils_3_1;
+            function (utils_4_1) {
+                utils_4 = utils_4_1;
             },
             function (FpsTracker_1_1) {
                 FpsTracker_1 = FpsTracker_1_1;
@@ -324,7 +422,7 @@ System.register("Environment", ["underscore", "rxjs/Rx", "physics/Physics", "uti
                     this.targetUps = 60;
                     this.upsTracker = new FpsTracker_1.FpsTracker();
                     this.fpsTracker = new FpsTracker_1.FpsTracker();
-                    this.canvas = utils_3.adjust(document.getElementById("canvas"), canvas => {
+                    this.canvas = utils_4.adjust(document.getElementById("canvas"), canvas => {
                         canvas.addEventListener("contextmenu", ev => ev.preventDefault());
                     });
                     this.graphics = new GraphicsEnvironment_1.GraphicsEnvionment(this);
@@ -540,14 +638,14 @@ System.register("Planetoid", ["box2dweb"], function (exports_10, context_10) {
 });
 System.register("Probe", ["box2dweb", "utils"], function (exports_11, context_11) {
     var __moduleName = context_11 && context_11.id;
-    var box2dweb_6, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, utils_4, Probe;
+    var box2dweb_6, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, utils_5, Probe;
     return {
         setters: [
             function (box2dweb_6_1) {
                 box2dweb_6 = box2dweb_6_1;
             },
-            function (utils_4_1) {
-                utils_4 = utils_4_1;
+            function (utils_5_1) {
+                utils_5 = utils_5_1;
             }
         ],
         execute: function () {
@@ -587,7 +685,7 @@ System.register("Probe", ["box2dweb", "utils"], function (exports_11, context_11
                         fixDef.shape = new b2CircleShape(this.args.radius);
                         return fixDef;
                     })());
-                    this.mesh = utils_4.adjust(BABYLON.MeshBuilder.CreateSphere("", {
+                    this.mesh = utils_5.adjust(BABYLON.MeshBuilder.CreateSphere("", {
                         segments: 4,
                         diameter: this.args.radius * 2
                     }, this.env.graphics.scene), mesh => {
@@ -607,7 +705,7 @@ System.register("Probe", ["box2dweb", "utils"], function (exports_11, context_11
                             this.env.graphics.camera.lockedTarget = mesh;
                         }));
                     });
-                    this.labelRoot = utils_4.adjust(new BABYLON.GUI.StackPanel(), panel => {
+                    this.labelRoot = utils_5.adjust(new BABYLON.GUI.StackPanel(), panel => {
                         panel.background = "black";
                         panel.alpha = 0.5;
                         panel.width = "150px";
@@ -616,7 +714,7 @@ System.register("Probe", ["box2dweb", "utils"], function (exports_11, context_11
                         this.env.graphics.worldGuiRoot.addControl(panel);
                         panel.linkWithMesh(this.mesh);
                     });
-                    this.labelTextBlock = utils_4.adjust(new BABYLON.GUI.TextBlock(), textBlock => {
+                    this.labelTextBlock = utils_5.adjust(new BABYLON.GUI.TextBlock(), textBlock => {
                         textBlock.color = "white";
                         textBlock.fontSize = "15px";
                         textBlock.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -720,7 +818,7 @@ System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb"], functi
                 });
             }
         }
-        const asteroidCount = 100 + Math.random() * 30;
+        const asteroidCount = 500 + 100 + Math.random() * 30;
         for (let i = 0; i < asteroidCount; i++) {
             const position = getRandomPolarVec2(asteroidBeltDist * 0.95, asteroidBeltDist * 1.05);
             position.Add(sol.body.GetPosition());
@@ -762,7 +860,8 @@ System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb"], functi
             }
         }
         const earth = closePlanets[Math.floor(Math.random() * closePlanets.length)];
-        const probeCount = Math.random() * 10 * 2;
+        const probeCount = 0;
+        Math.random() * 10 * 2;
         for (let i = 1; i < probeCount; i++) {
             const position = getRandomPolarVec2(1, 20);
             position.Add(earth.body.GetPosition());
@@ -918,4 +1017,3 @@ System.register("physics/SolarPower", ["box2dweb"], function (exports_15, contex
         }
     };
 });
-//# sourceMappingURL=app.js.map
