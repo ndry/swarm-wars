@@ -39,7 +39,7 @@ System.register("physics/Gravity", ["box2dweb", "utils"], function (exports_2, c
             Gravity = class Gravity {
                 constructor(world, gravitationalConstant = 10) {
                     this.world = world;
-                    this.chunkSide = 15;
+                    this.chunkSide = 10;
                     this.gravitationalConstant = gravitationalConstant;
                 }
                 c(x) {
@@ -83,7 +83,7 @@ System.register("physics/Gravity", ["box2dweb", "utils"], function (exports_2, c
                     }
                     for (let thisChunk of this.chunks.values()) {
                         for (let otherChunk of this.chunks.values()) {
-                            if (Math.abs(thisChunk.cx - otherChunk.cx) <= 1 && Math.abs(thisChunk.cy - otherChunk.cy) <= 1) {
+                            if (Math.abs(thisChunk.cx - otherChunk.cx) <= 2 * this.chunkSide && Math.abs(thisChunk.cy - otherChunk.cy) <= 2 * this.chunkSide) {
                                 continue;
                             }
                             const g = new b2Vec2();
@@ -134,7 +134,7 @@ System.register("physics/Gravity", ["box2dweb", "utils"], function (exports_2, c
                         dst.SetV(thisChunk.gravitationalAcceleration);
                         dst.Multiply(thisBody.GetMass());
                         thisBody.ApplyForce(dst, thisBody.GetWorldCenter());
-                        for (let otherBody of cf(this.c(thisBody.GetPosition().x), this.c(thisBody.GetPosition().y), 1)) {
+                        for (let otherBody of cf(this.c(thisBody.GetPosition().x), this.c(thisBody.GetPosition().y), 2)) {
                             if (thisBody === otherBody) {
                                 continue;
                             }

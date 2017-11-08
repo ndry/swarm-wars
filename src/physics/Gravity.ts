@@ -15,7 +15,7 @@ export class Gravity {
         this.gravitationalConstant = gravitationalConstant;
     }
 
-    chunkSide = 15;
+    chunkSide = 10;
     chunks: Map<string, {
         x: number,
         y: number,
@@ -83,7 +83,9 @@ export class Gravity {
 
         for (let thisChunk of this.chunks.values()) {
             for (let otherChunk of this.chunks.values()) {
-                if (Math.abs(thisChunk.cx - otherChunk.cx) <= 1 && Math.abs(thisChunk.cy - otherChunk.cy) <= 1) { continue; }
+                if (Math.abs(thisChunk.cx - otherChunk.cx) <= 2 * this.chunkSide && Math.abs(thisChunk.cy - otherChunk.cy) <= 2 * this.chunkSide) {
+                    continue;
+                }
 
                 const g = new b2Vec2();
                 g.SetV(otherChunk.centerOfMass);
@@ -131,7 +133,7 @@ export class Gravity {
             dst.Multiply(thisBody.GetMass());
             thisBody.ApplyForce(dst, thisBody.GetWorldCenter());
 
-            for (let otherBody of cf(this.c(thisBody.GetPosition().x), this.c(thisBody.GetPosition().y), 1)) {
+            for (let otherBody of cf(this.c(thisBody.GetPosition().x), this.c(thisBody.GetPosition().y), 2)) {
                 if (thisBody === otherBody) { continue; }
                 dst.SetV(otherBody.GetWorldCenter());
                 dst.Subtract(thisBody.GetWorldCenter());
