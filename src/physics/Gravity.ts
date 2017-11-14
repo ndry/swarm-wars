@@ -11,7 +11,7 @@ export class Gravity {
 
     constructor(
         private world: b2World,
-        gravitationalConstant: number = 10
+        gravitationalConstant: number = 10,
     ) {
         this.gravitationalConstant = gravitationalConstant;
     }
@@ -21,30 +21,30 @@ export class Gravity {
     f: WeakMap<Chunk<b2Body>, {
         centerOfMass: b2Vec2,
         mass: number,
-        gravitationalAcceleration: b2Vec2
+        gravitationalAcceleration: b2Vec2,
     }>;
 
     populateChunks() {
         this.f = new WeakMap<Chunk<b2Body>, {
             centerOfMass: b2Vec2,
             mass: number,
-            gravitationalAcceleration: b2Vec2
+            gravitationalAcceleration: b2Vec2,
         }>();
 
         this.chunkManager = new ChunkManager(this.chunkSide);
 
         for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
-            this.chunkManager.put(thisBody.GetPosition().x, thisBody.GetPosition().y, thisBody);
+            this.chunkManager.put(thisBody.GetPosition(), thisBody);
         }
 
-        for (let chunk of this.chunkManager.chunks.values()) {
+        for (const chunk of this.chunkManager.chunks.values()) {
             this.f.set(chunk, {
                 centerOfMass: new b2Vec2(),
                 mass: 0,
-                gravitationalAcceleration: new b2Vec2()
+                gravitationalAcceleration: new b2Vec2(),
             });
             const data = this.f.get(chunk);
-            for (let body of chunk.entries) {
+            for (const body of chunk.entries) {
                 const tmp = new b2Vec2();
                 tmp.SetV(body.GetWorldCenter());
                 tmp.Multiply(body.GetMass());
@@ -54,9 +54,9 @@ export class Gravity {
             data.centerOfMass.Multiply(1 / data.mass);
         }
 
-        for (let thisChunk of this.chunkManager.chunks.values()) {
+        for (const thisChunk of this.chunkManager.chunks.values()) {
             const thisData = this.f.get(thisChunk);
-            for (let otherChunk of this.chunkManager.chunks.values()) {
+            for (const otherChunk of this.chunkManager.chunks.values()) {
                 const otherData = this.f.get(otherChunk);
 
                 if (Math.abs(thisChunk.position.x - otherChunk.position.x) <= 2 * this.chunkSide
@@ -79,19 +79,25 @@ export class Gravity {
     applyForces(dt: number) {
         const dst = new b2Vec2(0, 0);
         for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
-            const thisChunk = this.chunkManager.getChunk(thisBody.GetPosition().x, thisBody.GetPosition().y);
+            const thisChunk = this.chunkManager.getChunk(thisBody.GetPosition());
             const thisData = this.f.get(thisChunk);
             dst.SetV(thisData.gravitationalAcceleration);
             dst.Multiply(thisBody.GetMass());
             thisBody.ApplyForce(dst, thisBody.GetWorldCenter());
 
-            for (let otherBody of this.chunkManager.enumerateSquare(thisBody.GetPosition().x, thisBody.GetPosition().y, 2)) {
+            for (const otherBody of this.chunkManager.enumerateSquare(
+                thisBody.GetPosition(),
+                2 * this.chunkManager.chunkSide,
+            )) {
                 if (thisBody === otherBody) { continue; }
                 dst.SetV(otherBody.GetWorldCenter());
                 dst.Subtract(thisBody.GetWorldCenter());
                 const dstLen = dst.Normalize();
                 if (dstLen > 0) {
-                    dst.Multiply(this.gravitationalConstant * thisBody.GetMass() * otherBody.GetMass() / (dstLen * dstLen));
+                    dst.Multiply(this.gravitationalConstant
+                        * thisBody.GetMass()
+                        * otherBody.GetMass()
+                        / (dstLen * dstLen));
                     thisBody.ApplyForce(dst, thisBody.GetWorldCenter());
                 }
             }

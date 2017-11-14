@@ -7,25 +7,25 @@ import b2Body = Box2D.Dynamics.b2Body;
 export class SolarPower {
 
     constructor(
-        private world: b2World
+        private world: b2World,
     ) {
     }
 
     update(dt: number) {
         const dst = new b2Vec2(0, 0);
-        for (var thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
+        for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
             const thisState = thisBody.GetUserData() as SolarPower.Emitter;
             if (!(thisState && SolarPower.isEmitter(thisState))) { continue; }
-            
-            for (var otherBody = this.world.GetBodyList(); otherBody; otherBody = otherBody.GetNext()) {
+
+            for (let otherBody = this.world.GetBodyList(); otherBody; otherBody = otherBody.GetNext()) {
                 if (thisBody === otherBody) { continue; }
                 const otherState = otherBody.GetUserData() as SolarPower.Consumer;
                 if (!(otherState && SolarPower.isConsumer(otherState))) { continue; }
-                
+
                 dst.SetV(otherBody.GetPosition());
                 dst.Subtract(thisBody.GetPosition());
                 const dstLen = dst.Normalize();
-                
+
                 this.consume(thisState, otherState, dstLen, dt);
             }
         }

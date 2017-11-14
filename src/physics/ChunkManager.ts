@@ -1,19 +1,23 @@
 function Map_getOrCreate<K, V>(map: Map<K, V>, key: K, valueFactory: (key: K) => V): V {
-    if (map.has(key)) {
-        return map.get(key);
-    } else {
-        const value = valueFactory(key);
+    let value = map.get(key);
+    if (!value) {
+        value = valueFactory(key);
         map.set(key, value);
-        return value;
     }
+    return value;
 }
 
 export interface Chunk<TEntry> {
     position: {
         x: number,
-        y: number
-    }
-    entries: TEntry[]
+        y: number,
+    };
+    entries: TEntry[];
+}
+
+interface Position {
+    x: number;
+    y: number;
 }
 
 export class ChunkManager<TEntry> {
@@ -21,46 +25,48 @@ export class ChunkManager<TEntry> {
     chunks = new Map<string, Chunk<TEntry>>();
 
     constructor(
-        chunkside: number
+        chunkside: number,
     ) {
         this.chunkSide = chunkside;
     }
 
-    cid(x: number, y: number) {
-        return `${Math.round(y / this.chunkSide)} @ ${Math.round(x / this.chunkSide)}`;
+    cid(p: Position) {
+        return `${Math.round(p.y / this.chunkSide)} @ ${Math.round(p.x / this.chunkSide)}`;
     }
 
-    put(x: number, y: number, entry: TEntry) {
-        const chunk = Map_getOrCreate(this.chunks, this.cid(x, y), () => ({
+    put(p: Position, entry: TEntry) {
+        const chunk = Map_getOrCreate(this.chunks, this.cid(p), () => ({
             position: {
-                x: Math.round(x / this.chunkSide) * this.chunkSide,
-                y: Math.round(y / this.chunkSide) * this.chunkSide,
+                x: Math.round(p.x / this.chunkSide) * this.chunkSide,
+                y: Math.round(p.y / this.chunkSide) * this.chunkSide,
             },
-            entries: []
-        }))
+            entries: [],
+        }));
         chunk.entries.push(entry);
     }
 
-    getChunk(x: number, y: number) {
-        return this.chunks.get(this.cid(x, y));
+    getChunk(p: Position) {
+        return this.chunks.get(this.cid(p));
     }
 
     * enumerateAll() {
-        yield* this.chunks.values();
-    };
+        for (const chunk of this.chunks.values()) {
+            yield* chunk.entries;
+        }
+    }
 
-    * enumerateChunk(x: number, y: number){
-        yield* this.getChunk(x, y).entries;
-    };
+    * enumerateChunk(p: Position) {
+        const chunk = this.getChunk(p);
+        if (chunk) {
+            yield* chunk.entries;
+        }
+    }
 
-    * enumerateSquare(x: number, y: number, r: number) {
+    * enumerateSquare(p: Position, r: number) {
         for (let dx = -r; dx <= r; dx += this.chunkSide) {
             for (let dy = -r; dy <= r; dy += this.chunkSide) {
-                const chunk = this.getChunk(x + dx, y + dy);
-                if (!chunk) { continue; }
-                yield* chunk.entries;
-            }   
+                yield* this.enumerateChunk({ x: p.x + dx, y: p.y + dy });
+            }
         }
     }
 }
-

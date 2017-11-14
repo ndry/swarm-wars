@@ -1,16 +1,16 @@
 System.register("utils", [], function (exports_1, context_1) {
     var __moduleName = context_1 && context_1.id;
     function isVisible(elt) {
-        var style = window.getComputedStyle(elt);
+        const style = window.getComputedStyle(elt);
         return +style.width !== 0
             && +style.height !== 0
             && +style.opacity !== 0
-            && style.display !== 'none'
-            && style.visibility !== 'hidden';
+            && style.display !== "none"
+            && style.visibility !== "hidden";
     }
     exports_1("isVisible", isVisible);
     function adjust(x, ...applyAdjustmentList) {
-        for (let applyAdjustment of applyAdjustmentList) {
+        for (const applyAdjustment of applyAdjustmentList) {
             applyAdjustment(x);
         }
         return x;
@@ -25,14 +25,12 @@ System.register("utils", [], function (exports_1, context_1) {
 System.register("physics/ChunkManager", [], function (exports_2, context_2) {
     var __moduleName = context_2 && context_2.id;
     function Map_getOrCreate(map, key, valueFactory) {
-        if (map.has(key)) {
-            return map.get(key);
-        }
-        else {
-            const value = valueFactory(key);
+        let value = map.get(key);
+        if (!value) {
+            value = valueFactory(key);
             map.set(key, value);
-            return value;
         }
+        return value;
     }
     var ChunkManager;
     return {
@@ -43,38 +41,37 @@ System.register("physics/ChunkManager", [], function (exports_2, context_2) {
                     this.chunks = new Map();
                     this.chunkSide = chunkside;
                 }
-                cid(x, y) {
-                    return `${Math.round(y / this.chunkSide)} @ ${Math.round(x / this.chunkSide)}`;
+                cid(p) {
+                    return `${Math.round(p.y / this.chunkSide)} @ ${Math.round(p.x / this.chunkSide)}`;
                 }
-                put(x, y, entry) {
-                    const chunk = Map_getOrCreate(this.chunks, this.cid(x, y), () => ({
+                put(p, entry) {
+                    const chunk = Map_getOrCreate(this.chunks, this.cid(p), () => ({
                         position: {
-                            x: Math.round(x / this.chunkSide) * this.chunkSide,
-                            y: Math.round(y / this.chunkSide) * this.chunkSide,
+                            x: Math.round(p.x / this.chunkSide) * this.chunkSide,
+                            y: Math.round(p.y / this.chunkSide) * this.chunkSide,
                         },
-                        entries: []
+                        entries: [],
                     }));
                     chunk.entries.push(entry);
                 }
-                getChunk(x, y) {
-                    return this.chunks.get(this.cid(x, y));
+                getChunk(p) {
+                    return this.chunks.get(this.cid(p));
                 }
                 *enumerateAll() {
-                    yield* this.chunks.values();
+                    for (const chunk of this.chunks.values()) {
+                        yield* chunk.entries;
+                    }
                 }
-                ;
-                *enumerateChunk(x, y) {
-                    yield* this.getChunk(x, y).entries;
+                *enumerateChunk(p) {
+                    const chunk = this.getChunk(p);
+                    if (chunk) {
+                        yield* chunk.entries;
+                    }
                 }
-                ;
-                *enumerateSquare(x, y, r) {
+                *enumerateSquare(p, r) {
                     for (let dx = -r; dx <= r; dx += this.chunkSide) {
                         for (let dy = -r; dy <= r; dy += this.chunkSide) {
-                            const chunk = this.getChunk(x + dx, y + dy);
-                            if (!chunk) {
-                                continue;
-                            }
-                            yield* chunk.entries;
+                            yield* this.enumerateChunk({ x: p.x + dx, y: p.y + dy });
                         }
                     }
                 }
@@ -107,16 +104,16 @@ System.register("physics/Gravity", ["box2dweb", "physics/ChunkManager"], functio
                     this.f = new WeakMap();
                     this.chunkManager = new ChunkManager_1.ChunkManager(this.chunkSide);
                     for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
-                        this.chunkManager.put(thisBody.GetPosition().x, thisBody.GetPosition().y, thisBody);
+                        this.chunkManager.put(thisBody.GetPosition(), thisBody);
                     }
-                    for (let chunk of this.chunkManager.chunks.values()) {
+                    for (const chunk of this.chunkManager.chunks.values()) {
                         this.f.set(chunk, {
                             centerOfMass: new b2Vec2(),
                             mass: 0,
-                            gravitationalAcceleration: new b2Vec2()
+                            gravitationalAcceleration: new b2Vec2(),
                         });
                         const data = this.f.get(chunk);
-                        for (let body of chunk.entries) {
+                        for (const body of chunk.entries) {
                             const tmp = new b2Vec2();
                             tmp.SetV(body.GetWorldCenter());
                             tmp.Multiply(body.GetMass());
@@ -125,9 +122,9 @@ System.register("physics/Gravity", ["box2dweb", "physics/ChunkManager"], functio
                         }
                         data.centerOfMass.Multiply(1 / data.mass);
                     }
-                    for (let thisChunk of this.chunkManager.chunks.values()) {
+                    for (const thisChunk of this.chunkManager.chunks.values()) {
                         const thisData = this.f.get(thisChunk);
-                        for (let otherChunk of this.chunkManager.chunks.values()) {
+                        for (const otherChunk of this.chunkManager.chunks.values()) {
                             const otherData = this.f.get(otherChunk);
                             if (Math.abs(thisChunk.position.x - otherChunk.position.x) <= 2 * this.chunkSide
                                 && Math.abs(thisChunk.position.y - otherChunk.position.y) <= 2 * this.chunkSide) {
@@ -147,12 +144,12 @@ System.register("physics/Gravity", ["box2dweb", "physics/ChunkManager"], functio
                 applyForces(dt) {
                     const dst = new b2Vec2(0, 0);
                     for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
-                        const thisChunk = this.chunkManager.getChunk(thisBody.GetPosition().x, thisBody.GetPosition().y);
+                        const thisChunk = this.chunkManager.getChunk(thisBody.GetPosition());
                         const thisData = this.f.get(thisChunk);
                         dst.SetV(thisData.gravitationalAcceleration);
                         dst.Multiply(thisBody.GetMass());
                         thisBody.ApplyForce(dst, thisBody.GetWorldCenter());
-                        for (let otherBody of this.chunkManager.enumerateSquare(thisBody.GetPosition().x, thisBody.GetPosition().y, 2)) {
+                        for (const otherBody of this.chunkManager.enumerateSquare(thisBody.GetPosition(), 2 * this.chunkManager.chunkSide)) {
                             if (thisBody === otherBody) {
                                 continue;
                             }
@@ -160,7 +157,10 @@ System.register("physics/Gravity", ["box2dweb", "physics/ChunkManager"], functio
                             dst.Subtract(thisBody.GetWorldCenter());
                             const dstLen = dst.Normalize();
                             if (dstLen > 0) {
-                                dst.Multiply(this.gravitationalConstant * thisBody.GetMass() * otherBody.GetMass() / (dstLen * dstLen));
+                                dst.Multiply(this.gravitationalConstant
+                                    * thisBody.GetMass()
+                                    * otherBody.GetMass()
+                                    / (dstLen * dstLen));
                                 thisBody.ApplyForce(dst, thisBody.GetWorldCenter());
                             }
                         }
@@ -194,13 +194,13 @@ System.register("physics/Military", ["box2dweb"], function (exports_4, context_4
                     this.population = {};
                     return;
                     const dst = new b2Vec2(0, 0);
-                    for (var thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
+                    for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
                         const thisState = thisBody.GetUserData();
                         if (!(thisState && Military.isUnit(thisState))) {
                             continue;
                         }
                         this.population[thisState.faction] = (this.population[thisState.faction] || 0) + 1;
-                        for (var otherBody = this.world.GetBodyList(); otherBody; otherBody = otherBody.GetNext()) {
+                        for (let otherBody = this.world.GetBodyList(); otherBody; otherBody = otherBody.GetNext()) {
                             if (thisBody === otherBody) {
                                 continue;
                             }
@@ -335,23 +335,23 @@ System.register("graphics/GuiView", ["utils"], function (exports_7, context_7) {
                         t.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
                     });
                     this.pauseButton = create(BABYLON.GUI.Button, this.panel, GuiView.defaultButtonStyle, el => {
-                        create(BABYLON.GUI.TextBlock, el, el => {
-                            el.text = "Pause";
+                        create(BABYLON.GUI.TextBlock, el, el1 => {
+                            el1.text = "Pause";
                         });
                     });
                     this.stepButton = create(BABYLON.GUI.Button, this.panel, GuiView.defaultButtonStyle, el => {
-                        create(BABYLON.GUI.TextBlock, el, el => {
-                            el.text = "Step";
+                        create(BABYLON.GUI.TextBlock, el, el1 => {
+                            el1.text = "Step";
                         });
                     });
                     this.toggleGravityButton = create(BABYLON.GUI.Button, this.panel, GuiView.defaultButtonStyle, el => {
-                        create(BABYLON.GUI.TextBlock, el, el => {
-                            el.text = "Toggle Gravity";
+                        create(BABYLON.GUI.TextBlock, el, el1 => {
+                            el1.text = "Toggle Gravity";
                         });
                     });
                     this.toggleWorldGuiButton = create(BABYLON.GUI.Button, this.panel, GuiView.defaultButtonStyle, el => {
-                        create(BABYLON.GUI.TextBlock, el, el => {
-                            el.text = "Toggle World GUI";
+                        create(BABYLON.GUI.TextBlock, el, el1 => {
+                            el1.text = "Toggle World GUI";
                         });
                     });
                 }
@@ -393,7 +393,7 @@ System.register("graphics/GraphicsEnvironment", ["graphics/GuiView", "utils"], f
                         scene.clearColor = new BABYLON.Color4(0.1, 0, 0.1, 1);
                     });
                     this.camera = (() => {
-                        const camera = new BABYLON.ArcRotateCamera('camera1', Math.PI / 2, 0, 100, new BABYLON.Vector3(0, 0, 0), this.scene);
+                        const camera = new BABYLON.ArcRotateCamera("", Math.PI / 2, 0, 100, new BABYLON.Vector3(0, 0, 0), this.scene);
                         camera.lowerRadiusLimit = 2;
                         camera.upperRadiusLimit = 50000;
                         camera.attachControl(this.env.canvas, false);
@@ -539,7 +539,7 @@ System.register("Star", ["box2dweb"], function (exports_10, context_10) {
                 constructor(env, args) {
                     this.env = env;
                     this.body = env.physics.world.CreateBody((() => {
-                        var bodyDef = new b2BodyDef;
+                        const bodyDef = new b2BodyDef();
                         bodyDef.type = b2Body.b2_dynamicBody;
                         bodyDef.position.Set(args.position.x, args.position.y);
                         bodyDef.linearVelocity.Set(args.linearVelocity.x, args.linearVelocity.y);
@@ -548,7 +548,7 @@ System.register("Star", ["box2dweb"], function (exports_10, context_10) {
                         return bodyDef;
                     })());
                     this.fixture = this.body.CreateFixture((() => {
-                        var fixDef = new b2FixtureDef;
+                        const fixDef = new b2FixtureDef();
                         fixDef.density = args.density;
                         fixDef.friction = 1.0;
                         fixDef.restitution = .1;
@@ -576,6 +576,7 @@ System.register("Star", ["box2dweb"], function (exports_10, context_10) {
                     this.renderSubscription = env.renderObservable.subscribe(() => this.render());
                 }
                 update(dt) {
+                    //
                 }
                 render() {
                     this.mesh.position.x = this.body.GetPosition().x;
@@ -607,7 +608,7 @@ System.register("Planetoid", ["box2dweb"], function (exports_11, context_11) {
                 constructor(env, args) {
                     this.env = env;
                     this.body = env.physics.world.CreateBody((() => {
-                        var bodyDef = new b2BodyDef;
+                        const bodyDef = new b2BodyDef();
                         bodyDef.type = b2Body.b2_dynamicBody;
                         bodyDef.position.Set(args.position.x, args.position.y);
                         bodyDef.linearVelocity.Set(args.linearVelocity.x, args.linearVelocity.y);
@@ -616,7 +617,7 @@ System.register("Planetoid", ["box2dweb"], function (exports_11, context_11) {
                         return bodyDef;
                     })());
                     this.fixture = this.body.CreateFixture((() => {
-                        var fixDef = new b2FixtureDef;
+                        const fixDef = new b2FixtureDef();
                         fixDef.density = args.density;
                         fixDef.friction = 1.0;
                         fixDef.restitution = .1;
@@ -643,6 +644,7 @@ System.register("Planetoid", ["box2dweb"], function (exports_11, context_11) {
                     this.renderSubscription = env.renderObservable.subscribe(() => this.render());
                 }
                 update(dt) {
+                    //
                 }
                 render() {
                     this.mesh.position.x = this.body.GetPosition().x;
@@ -683,10 +685,10 @@ System.register("Probe", ["box2dweb", "utils"], function (exports_12, context_12
                         attack: 10,
                         defense: 10,
                         faction: this.args.color.toHexString(),
-                        range: this.args.radius * 5
+                        range: this.args.radius * 5,
                     };
                     this.body = this.env.physics.world.CreateBody((() => {
-                        var bodyDef = new b2BodyDef;
+                        const bodyDef = new b2BodyDef();
                         bodyDef.type = b2Body.b2_dynamicBody;
                         bodyDef.position.Set(this.args.position.x, this.args.position.y);
                         bodyDef.linearVelocity.Set(this.args.linearVelocity.x, this.args.linearVelocity.y);
@@ -696,7 +698,7 @@ System.register("Probe", ["box2dweb", "utils"], function (exports_12, context_12
                         return bodyDef;
                     })());
                     this.fixture = this.body.CreateFixture((() => {
-                        var fixDef = new b2FixtureDef;
+                        const fixDef = new b2FixtureDef();
                         fixDef.density = this.args.density;
                         fixDef.friction = 1.0;
                         fixDef.restitution = .1;
@@ -705,22 +707,22 @@ System.register("Probe", ["box2dweb", "utils"], function (exports_12, context_12
                     })());
                     this.mesh = utils_4.adjust(BABYLON.MeshBuilder.CreateSphere("", {
                         segments: 4,
-                        diameter: this.args.radius * 2
+                        diameter: this.args.radius * 2,
                     }, this.env.graphics.scene), mesh => {
                         const m = new BABYLON.StandardMaterial("", this.env.graphics.scene);
                         m.diffuseColor = this.args.color;
                         mesh.material = m;
                         mesh.outlineColor = new BABYLON.Color3(0, 0, 1);
                         mesh.outlineWidth = .05;
-                        mesh.actionManager = new BABYLON.ActionManager(this.env.graphics.scene);
-                        mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, evt => {
-                            mesh.renderOutline = true;
+                        this.mesh.actionManager = new BABYLON.ActionManager(this.env.graphics.scene);
+                        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, evt => {
+                            this.mesh.renderOutline = true;
                         }));
-                        mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, evt => {
-                            mesh.renderOutline = false;
+                        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, evt => {
+                            this.mesh.renderOutline = false;
                         }));
-                        mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, evt => {
-                            this.env.graphics.camera.lockedTarget = mesh;
+                        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, evt => {
+                            this.env.graphics.camera.lockedTarget = this.mesh;
                         }));
                     });
                     this.labelRoot = utils_4.adjust(new BABYLON.GUI.StackPanel(), panel => {
@@ -743,20 +745,21 @@ System.register("Probe", ["box2dweb", "utils"], function (exports_12, context_12
                 }
                 update(dt) {
                     if (Math.random() < .001) {
+                        // tslint:disable-next-line:no-unused-expression
                         new Probe(this.env, {
                             position: {
                                 x: this.body.GetPosition().x + this.args.radius * Math.cos(this.body.GetAngle()),
-                                y: this.body.GetPosition().y - this.args.radius * Math.sin(this.body.GetAngle())
+                                y: this.body.GetPosition().y - this.args.radius * Math.sin(this.body.GetAngle()),
                             },
                             linearVelocity: {
                                 x: this.body.GetLinearVelocity().x,
-                                y: this.body.GetLinearVelocity().y
+                                y: this.body.GetLinearVelocity().y,
                             },
                             angle: -this.body.GetAngle(),
                             angularVelocity: -this.body.GetAngularVelocity(),
                             radius: this.args.radius,
                             color: this.args.color,
-                            density: this.fixture.GetDensity()
+                            density: this.fixture.GetDensity(),
                         });
                     }
                 }
@@ -796,16 +799,16 @@ System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb"], functi
         const sol = new Star_1.Star(env, {
             position: {
                 x: (Math.random() - 0.5) * 100,
-                y: (Math.random() - 0.5) * 100
+                y: (Math.random() - 0.5) * 100,
             },
             linearVelocity: {
                 x: 50 * (Math.random() - 0.5),
-                y: 50 * (Math.random() - 0.5)
+                y: 50 * (Math.random() - 0.5),
             },
             angle: Math.random() * 2 * Math.PI,
             angularVelocity: 20 * (Math.random() - 0.5),
             radius: 8 + Math.random() * 2,
-            density: 10
+            density: 10,
         });
         const asteroidBeltDist = 50 + Math.random() * 50;
         const closePlanets = [];
@@ -814,25 +817,25 @@ System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb"], functi
             const position = getRandomPolarVec2(30, asteroidBeltDist - 10);
             position.Add(sol.body.GetPosition());
             const planet = new Planetoid_1.Planetoid(env, {
-                position: position,
+                position,
                 linearVelocity: getOrbitalSpeed(position, sol.body, env.physics.gravity.gravitationalConstant),
                 angle: Math.random() * 2 * Math.PI,
                 angularVelocity: 20 * (Math.random() - 0.5),
                 radius: 1 + Math.random() * 1,
-                density: 1
+                density: 1,
             });
             closePlanets.push(planet);
             const moonCount = Math.random() * 3;
             for (let j = 1; j < moonCount; j++) {
-                const position = getRandomPolarVec2(3, 15);
-                position.Add(planet.body.GetPosition());
+                const p = getRandomPolarVec2(3, 15);
+                p.Add(planet.body.GetPosition());
                 const moon = new Planetoid_1.Planetoid(env, {
-                    position: position,
-                    linearVelocity: getOrbitalSpeed(position, planet.body, env.physics.gravity.gravitationalConstant),
+                    position: p,
+                    linearVelocity: getOrbitalSpeed(p, planet.body, env.physics.gravity.gravitationalConstant),
                     angle: Math.random() * 2 * Math.PI,
                     angularVelocity: 20 * (Math.random() - 0.5),
                     radius: .5 + Math.random() * .05,
-                    density: .1
+                    density: .1,
                 });
             }
         }
@@ -846,7 +849,7 @@ System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb"], functi
                 angle: Math.random() * 2 * Math.PI,
                 angularVelocity: 20 * (Math.random() - 0.5),
                 radius: .3 + Math.random() * .2,
-                density: .5
+                density: .5,
             });
         }
         const outPlanets = [];
@@ -860,37 +863,36 @@ System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb"], functi
                 angle: Math.random() * 2 * Math.PI,
                 angularVelocity: 20 * (Math.random() - 0.5),
                 radius: 2 + Math.random() * 3,
-                density: 2
+                density: 2,
             });
             outPlanets.push(planet);
             const moonCount = Math.random() * 10;
             for (let j = 1; j < moonCount; j++) {
-                const position = getRandomPolarVec2(3, 15);
-                position.Add(planet.body.GetPosition());
+                const p = getRandomPolarVec2(3, 15);
+                p.Add(planet.body.GetPosition());
                 const moon = new Planetoid_1.Planetoid(env, {
-                    position: position,
-                    linearVelocity: getOrbitalSpeed(position, planet.body, env.physics.gravity.gravitationalConstant),
+                    position: p,
+                    linearVelocity: getOrbitalSpeed(p, planet.body, env.physics.gravity.gravitationalConstant),
                     angle: Math.random() * 2 * Math.PI,
                     angularVelocity: 20 * (Math.random() - 0.5),
                     radius: .5 + Math.random() * .05,
-                    density: .1
+                    density: .1,
                 });
             }
         }
         const earth = closePlanets[Math.floor(Math.random() * closePlanets.length)];
-        const probeCount = 0;
-        Math.random() * 10 * 2;
+        const probeCount = 0; // Math.random() * 10 * 2;
         for (let i = 1; i < probeCount; i++) {
             const position = getRandomPolarVec2(1, 20);
             position.Add(earth.body.GetPosition());
             const moon = new Probe_1.Probe(env, {
-                position: position,
+                position,
                 linearVelocity: getOrbitalSpeed(position, earth.body, env.physics.gravity.gravitationalConstant),
                 angle: Math.random() * 2 * Math.PI,
                 angularVelocity: 20 * (Math.random() - 0.5),
                 radius: .2 + Math.random() * .05,
                 color: i % 2 ? new BABYLON.Color3(1, 0, 0) : new BABYLON.Color3(0, 1, 0),
-                density: .005
+                density: .005,
             });
         }
         env.graphics.camera.lockedTarget = earth.mesh;
@@ -953,7 +955,7 @@ System.register("physics/Energy", ["box2dweb"], function (exports_15, context_15
                 }
                 update(dt) {
                     const dst = new b2Vec2(0, 0);
-                    for (var thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
+                    for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
                         const thisState = thisBody.GetUserData();
                         if (!(thisState && Energy.isContainer(thisState))) {
                             continue;
@@ -978,7 +980,7 @@ System.register("physics/Energy", ["box2dweb"], function (exports_15, context_15
         }
     };
 });
-//todo 
+// todo
 System.register("physics/SolarPower", ["box2dweb"], function (exports_16, context_16) {
     var __moduleName = context_16 && context_16.id;
     var box2dweb_9, b2Vec2, SolarPower;
@@ -996,12 +998,12 @@ System.register("physics/SolarPower", ["box2dweb"], function (exports_16, contex
                 }
                 update(dt) {
                     const dst = new b2Vec2(0, 0);
-                    for (var thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
+                    for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
                         const thisState = thisBody.GetUserData();
                         if (!(thisState && SolarPower.isEmitter(thisState))) {
                             continue;
                         }
-                        for (var otherBody = this.world.GetBodyList(); otherBody; otherBody = otherBody.GetNext()) {
+                        for (let otherBody = this.world.GetBodyList(); otherBody; otherBody = otherBody.GetNext()) {
                             if (thisBody === otherBody) {
                                 continue;
                             }
@@ -1032,6 +1034,73 @@ System.register("physics/SolarPower", ["box2dweb"], function (exports_16, contex
                 SolarPower.isConsumer = isConsumer;
             })(SolarPower || (SolarPower = {}));
             exports_16("SolarPower", SolarPower);
+        }
+    };
+});
+System.register("utils/Constructor", [], function (exports_17, context_17) {
+    var __moduleName = context_17 && context_17.id;
+    return {
+        setters: [],
+        execute: function () {
+        }
+    };
+});
+System.register("utils/IDestructable", [], function (exports_18, context_18) {
+    var __moduleName = context_18 && context_18.id;
+    return {
+        setters: [],
+        execute: function () {
+        }
+    };
+});
+System.register("utils/misc", [], function (exports_19, context_19) {
+    var __moduleName = context_19 && context_19.id;
+    function isVisible(elt) {
+        const style = window.getComputedStyle(elt);
+        return (style.width !== null && +style.width !== 0)
+            && (style.height !== null && +style.height !== 0)
+            && (style.opacity !== null && +style.opacity !== 0)
+            && style.display !== "none"
+            && style.visibility !== "hidden";
+    }
+    exports_19("isVisible", isVisible);
+    function adjust(x, ...applyAdjustmentList) {
+        for (const applyAdjustment of applyAdjustmentList) {
+            applyAdjustment(x);
+        }
+        return x;
+    }
+    exports_19("adjust", adjust);
+    function getRandomElement(array) {
+        return array[Math.floor(Math.random() * array.length)];
+    }
+    exports_19("getRandomElement", getRandomElement);
+    function* floodFill(base, getNeighbours, neighbourFilter) {
+        const queue = new Array();
+        const visited = new Set();
+        function enqueueUnique(element, wave) {
+            if (!visited.has(element)) {
+                queue.push({ element, wave });
+                visited.add(element);
+            }
+        }
+        for (const element of base) {
+            enqueueUnique(element, 0);
+        }
+        for (let entry = queue.shift(); entry; entry = queue.shift()) {
+            yield entry;
+            const { element, wave } = entry;
+            for (const t of getNeighbours(element)) {
+                if (neighbourFilter(t)) {
+                    enqueueUnique(t, wave + 1);
+                }
+            }
+        }
+    }
+    exports_19("floodFill", floodFill);
+    return {
+        setters: [],
+        execute: function () {
         }
     };
 });

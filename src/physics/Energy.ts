@@ -7,22 +7,22 @@ import b2Body = Box2D.Dynamics.b2Body;
 export class Energy {
 
     constructor(
-        private world: b2World
+        private world: b2World,
     ) {
     }
 
     update(dt: number) {
         const dst = new b2Vec2(0, 0);
-        for (var thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
+        for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
             const thisState = thisBody.GetUserData();
             if (!(thisState && Energy.isContainer(thisState))) { continue; }
-            
+
             this.act(thisState, dt);
         }
     }
 
     act(subject: Energy.Container, dt: number) {
-        subject.energy = Math.min(subject.energy - subject.energyDelta, subject.energyCapacity)
+        subject.energy = Math.min(subject.energy - subject.energyDelta, subject.energyCapacity);
         subject.energyDelta = 0;
         subject.isEnergyAvailable = subject.energy > 0;
     }

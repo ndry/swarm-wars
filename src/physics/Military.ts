@@ -7,9 +7,9 @@ import b2Body = Box2D.Dynamics.b2Body;
 export class Military {
 
     population: { [faction: string]: number };
-    
+
     constructor(
-        private world: b2World
+        private world: b2World,
     ) {
     }
 
@@ -17,13 +17,13 @@ export class Military {
         this.population = {};
         return;
         const dst = new b2Vec2(0, 0);
-        for (var thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
+        for (let thisBody = this.world.GetBodyList(); thisBody; thisBody = thisBody.GetNext()) {
             const thisState = thisBody.GetUserData();
             if (!(thisState && Military.isUnit(thisState))) { continue; }
-            
+
             this.population[thisState.faction] = (this.population[thisState.faction] || 0) + 1;
-            
-            for (var otherBody = this.world.GetBodyList(); otherBody; otherBody = otherBody.GetNext()) {
+
+            for (let otherBody = this.world.GetBodyList(); otherBody; otherBody = otherBody.GetNext()) {
                 if (thisBody === otherBody) { continue; }
                 const otherState = otherBody.GetUserData();
                 if (!(otherState && Military.isUnit(otherState))) { continue; }
@@ -32,7 +32,7 @@ export class Military {
                 dst.SetV(otherBody.GetPosition());
                 dst.Subtract(thisBody.GetPosition());
                 const dstLen = dst.Normalize();
-                
+
                 this.attack(thisState, otherState, dstLen, dt);
             }
         }

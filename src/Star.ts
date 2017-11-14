@@ -6,20 +6,20 @@ import b2Body = Box2D.Dynamics.b2Body;
 import b2Fixture = Box2D.Dynamics.b2Fixture;
 import b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
 
-import Rx from 'rxjs/Rx';
+import Rx from "rxjs/Rx";
 
 export namespace Star {
     export interface Environment {
         physics: {
-            world: b2World
-        },
+            world: b2World,
+        };
         graphics: {
             scene: BABYLON.Scene;
             camera: BABYLON.ArcRotateCamera;
-        }
-        pixelsPerMeter: number,
-        updateObservable: Rx.Observable<number>,
-        renderObservable: Rx.Observable<number>
+        };
+        pixelsPerMeter: number;
+        updateObservable: Rx.Observable<number>;
+        renderObservable: Rx.Observable<number>;
     }
 }
 
@@ -32,24 +32,24 @@ export class Star {
     renderSubscription: Rx.Subscription;
 
     constructor(
-        private env: Star.Environment,        
+        private env: Star.Environment,
         args: {
             position: {
                 x: number,
-                y: number
+                y: number,
             },
             linearVelocity: {
                 x: number,
-                y: number
+                y: number,
             },
             angle: number,
             angularVelocity: number,
             radius: number,
-            density: number
-        }
+            density: number,
+        },
     ) {
         this.body = env.physics.world.CreateBody((() => {
-            var bodyDef = new b2BodyDef;
+            const bodyDef = new b2BodyDef();
             bodyDef.type = b2Body.b2_dynamicBody;
             bodyDef.position.Set(args.position.x, args.position.y);
             bodyDef.linearVelocity.Set(args.linearVelocity.x, args.linearVelocity.y);
@@ -58,7 +58,7 @@ export class Star {
             return bodyDef;
         })());
         this.fixture = this.body.CreateFixture((() => {
-            var fixDef = new b2FixtureDef;
+            const fixDef = new b2FixtureDef();
             fixDef.density = args.density;
             fixDef.friction = 1.0;
             fixDef.restitution = .1;
@@ -66,34 +66,41 @@ export class Star {
             return fixDef;
         })());
 
-        this.mesh = BABYLON.MeshBuilder.CreateSphere("", {segments: 4, diameter: args.radius * 2}, this.env.graphics.scene);
+        this.mesh = BABYLON.MeshBuilder.CreateSphere("",
+            {segments: 4, diameter: args.radius * 2},
+            this.env.graphics.scene);
         const m = new BABYLON.StandardMaterial("", env.graphics.scene);
         m.emissiveColor = new BABYLON.Color3(1, 1, 1);
         this.mesh.material = m;
 
         this.light = new BABYLON.PointLight("", new BABYLON.Vector3(0, 0, 0), this.env.graphics.scene);
-            
+
         this.mesh.outlineColor = new BABYLON.Color3(0, 0, 1);
         this.mesh.outlineWidth = .05;
 
         this.mesh.actionManager = new BABYLON.ActionManager(this.env.graphics.scene);
-        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, evt => {
-            this.mesh.renderOutline = true;
-        }));
-        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, evt => {
-            this.mesh.renderOutline = false;
-        }));
-        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, evt => {
-            this.env.graphics.camera.lockedTarget = this.mesh;
-        }));
-        
+        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+            BABYLON.ActionManager.OnPointerOverTrigger,
+            evt => {
+                this.mesh.renderOutline = true;
+            }));
+        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+            BABYLON.ActionManager.OnPointerOutTrigger,
+            evt => {
+                this.mesh.renderOutline = false;
+            }));
+        this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(
+            BABYLON.ActionManager.OnPickTrigger,
+            evt => {
+                this.env.graphics.camera.lockedTarget = this.mesh;
+            }));
 
         this.updateSubscription = env.updateObservable.subscribe(dt => this.update(dt));
         this.renderSubscription = env.renderObservable.subscribe(() => this.render());
     }
 
     update(dt: number) {
-
+        //
     }
 
     render() {
