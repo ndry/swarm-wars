@@ -3,7 +3,7 @@ import { adjust } from "../utils";
 function create<T extends BABYLON.GUI.Control>(
     constructor: new () => T,
     parent: BABYLON.GUI.Container | BABYLON.GUI.AdvancedDynamicTexture,
-    ...applyStyles: Array<(el: T) => void>,
+    ...applyStyles: Array<(el: T) => void>
 ): T {
     return adjust(
         new constructor(),

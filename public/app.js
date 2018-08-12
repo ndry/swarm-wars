@@ -23,6 +23,7 @@ System.register("utils", [], function (exports_1, context_1) {
     };
 });
 System.register("physics/ChunkManager", [], function (exports_2, context_2) {
+    var ChunkManager;
     var __moduleName = context_2 && context_2.id;
     function Map_getOrCreate(map, key, valueFactory) {
         let value = map.get(key);
@@ -32,7 +33,6 @@ System.register("physics/ChunkManager", [], function (exports_2, context_2) {
         }
         return value;
     }
-    var ChunkManager;
     return {
         setters: [],
         execute: function () {
@@ -81,8 +81,8 @@ System.register("physics/ChunkManager", [], function (exports_2, context_2) {
     };
 });
 System.register("physics/Gravity", ["box2dweb", "physics/ChunkManager"], function (exports_3, context_3) {
-    var __moduleName = context_3 && context_3.id;
     var box2dweb_1, b2Vec2, ChunkManager_1, Gravity;
+    var __moduleName = context_3 && context_3.id;
     return {
         setters: [
             function (box2dweb_1_1) {
@@ -176,8 +176,8 @@ System.register("physics/Gravity", ["box2dweb", "physics/ChunkManager"], functio
     };
 });
 System.register("physics/Military", ["box2dweb"], function (exports_4, context_4) {
-    var __moduleName = context_4 && context_4.id;
     var box2dweb_2, b2Vec2, Military;
+    var __moduleName = context_4 && context_4.id;
     return {
         setters: [
             function (box2dweb_2_1) {
@@ -242,8 +242,8 @@ System.register("physics/Military", ["box2dweb"], function (exports_4, context_4
     };
 });
 System.register("physics/Physics", ["box2dweb", "physics/Gravity", "physics/Military"], function (exports_5, context_5) {
-    var __moduleName = context_5 && context_5.id;
     var box2dweb_3, b2Vec2, b2World, Gravity_1, Military_1, Physics;
+    var __moduleName = context_5 && context_5.id;
     return {
         setters: [
             function (box2dweb_3_1) {
@@ -280,8 +280,8 @@ System.register("physics/Physics", ["box2dweb", "physics/Gravity", "physics/Mili
     };
 });
 System.register("FpsTracker", [], function (exports_6, context_6) {
-    var __moduleName = context_6 && context_6.id;
     var FpsTracker;
+    var __moduleName = context_6 && context_6.id;
     return {
         setters: [],
         execute: function () {
@@ -307,11 +307,11 @@ System.register("FpsTracker", [], function (exports_6, context_6) {
     };
 });
 System.register("graphics/GuiView", ["utils"], function (exports_7, context_7) {
+    var utils_1, GuiView;
     var __moduleName = context_7 && context_7.id;
     function create(constructor, parent, ...applyStyles) {
         return utils_1.adjust(new constructor(), ...applyStyles, el => parent.addControl(el));
     }
-    var utils_1, GuiView;
     return {
         setters: [
             function (utils_1_1) {
@@ -373,8 +373,8 @@ System.register("graphics/GuiView", ["utils"], function (exports_7, context_7) {
     };
 });
 System.register("graphics/GraphicsEnvironment", ["graphics/GuiView", "utils"], function (exports_8, context_8) {
-    var __moduleName = context_8 && context_8.id;
     var GuiView_1, utils_2, GraphicsEnvionment;
+    var __moduleName = context_8 && context_8.id;
     return {
         setters: [
             function (GuiView_1_1) {
@@ -409,8 +409,8 @@ System.register("graphics/GraphicsEnvironment", ["graphics/GuiView", "utils"], f
     };
 });
 System.register("Environment", ["underscore", "rxjs/Rx", "physics/Physics", "utils", "FpsTracker", "graphics/GraphicsEnvironment"], function (exports_9, context_9) {
-    var __moduleName = context_9 && context_9.id;
     var underscore_1, Rx_1, Physics_1, utils_3, FpsTracker_1, GraphicsEnvironment_1, Enviornment;
+    var __moduleName = context_9 && context_9.id;
     return {
         setters: [
             function (underscore_1_1) {
@@ -521,9 +521,9 @@ System.register("Environment", ["underscore", "rxjs/Rx", "physics/Physics", "uti
         }
     };
 });
-System.register("Star", ["box2dweb"], function (exports_10, context_10) {
+System.register("Planetoid", ["box2dweb"], function (exports_10, context_10) {
+    var box2dweb_4, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Planetoid;
     var __moduleName = context_10 && context_10.id;
-    var box2dweb_4, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Star;
     return {
         setters: [
             function (box2dweb_4_1) {
@@ -535,75 +535,6 @@ System.register("Star", ["box2dweb"], function (exports_10, context_10) {
             b2FixtureDef = box2dweb_4.default.Dynamics.b2FixtureDef;
             b2Body = box2dweb_4.default.Dynamics.b2Body;
             b2CircleShape = box2dweb_4.default.Collision.Shapes.b2CircleShape;
-            Star = class Star {
-                constructor(env, args) {
-                    this.env = env;
-                    this.body = env.physics.world.CreateBody((() => {
-                        const bodyDef = new b2BodyDef();
-                        bodyDef.type = b2Body.b2_dynamicBody;
-                        bodyDef.position.Set(args.position.x, args.position.y);
-                        bodyDef.linearVelocity.Set(args.linearVelocity.x, args.linearVelocity.y);
-                        bodyDef.angularVelocity = args.angularVelocity;
-                        bodyDef.angle = args.angle;
-                        return bodyDef;
-                    })());
-                    this.fixture = this.body.CreateFixture((() => {
-                        const fixDef = new b2FixtureDef();
-                        fixDef.density = args.density;
-                        fixDef.friction = 1.0;
-                        fixDef.restitution = .1;
-                        fixDef.shape = new b2CircleShape(args.radius);
-                        return fixDef;
-                    })());
-                    this.mesh = BABYLON.MeshBuilder.CreateSphere("", { segments: 4, diameter: args.radius * 2 }, this.env.graphics.scene);
-                    const m = new BABYLON.StandardMaterial("", env.graphics.scene);
-                    m.emissiveColor = new BABYLON.Color3(1, 1, 1);
-                    this.mesh.material = m;
-                    this.light = new BABYLON.PointLight("", new BABYLON.Vector3(0, 0, 0), this.env.graphics.scene);
-                    this.mesh.outlineColor = new BABYLON.Color3(0, 0, 1);
-                    this.mesh.outlineWidth = .05;
-                    this.mesh.actionManager = new BABYLON.ActionManager(this.env.graphics.scene);
-                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, evt => {
-                        this.mesh.renderOutline = true;
-                    }));
-                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, evt => {
-                        this.mesh.renderOutline = false;
-                    }));
-                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, evt => {
-                        this.env.graphics.camera.lockedTarget = this.mesh;
-                    }));
-                    this.updateSubscription = env.updateObservable.subscribe(dt => this.update(dt));
-                    this.renderSubscription = env.renderObservable.subscribe(() => this.render());
-                }
-                update(dt) {
-                    //
-                }
-                render() {
-                    this.mesh.position.x = this.body.GetPosition().x;
-                    this.mesh.position.z = this.body.GetPosition().y;
-                    this.mesh.rotation.y = this.body.GetAngle();
-                    this.light.position.x = this.body.GetPosition().x;
-                    this.light.position.z = this.body.GetPosition().y;
-                }
-            };
-            exports_10("Star", Star);
-        }
-    };
-});
-System.register("Planetoid", ["box2dweb"], function (exports_11, context_11) {
-    var __moduleName = context_11 && context_11.id;
-    var box2dweb_5, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Planetoid;
-    return {
-        setters: [
-            function (box2dweb_5_1) {
-                box2dweb_5 = box2dweb_5_1;
-            }
-        ],
-        execute: function () {
-            b2BodyDef = box2dweb_5.default.Dynamics.b2BodyDef;
-            b2FixtureDef = box2dweb_5.default.Dynamics.b2FixtureDef;
-            b2Body = box2dweb_5.default.Dynamics.b2Body;
-            b2CircleShape = box2dweb_5.default.Collision.Shapes.b2CircleShape;
             Planetoid = class Planetoid {
                 constructor(env, args) {
                     this.env = env;
@@ -652,27 +583,27 @@ System.register("Planetoid", ["box2dweb"], function (exports_11, context_11) {
                     this.mesh.rotation.y = this.body.GetAngle();
                 }
             };
-            exports_11("Planetoid", Planetoid);
+            exports_10("Planetoid", Planetoid);
         }
     };
 });
-System.register("Probe", ["box2dweb", "utils"], function (exports_12, context_12) {
-    var __moduleName = context_12 && context_12.id;
-    var box2dweb_6, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, utils_4, Probe;
+System.register("Probe", ["box2dweb", "utils"], function (exports_11, context_11) {
+    var box2dweb_5, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, utils_4, Probe;
+    var __moduleName = context_11 && context_11.id;
     return {
         setters: [
-            function (box2dweb_6_1) {
-                box2dweb_6 = box2dweb_6_1;
+            function (box2dweb_5_1) {
+                box2dweb_5 = box2dweb_5_1;
             },
             function (utils_4_1) {
                 utils_4 = utils_4_1;
             }
         ],
         execute: function () {
-            b2BodyDef = box2dweb_6.default.Dynamics.b2BodyDef;
-            b2FixtureDef = box2dweb_6.default.Dynamics.b2FixtureDef;
-            b2Body = box2dweb_6.default.Dynamics.b2Body;
-            b2CircleShape = box2dweb_6.default.Collision.Shapes.b2CircleShape;
+            b2BodyDef = box2dweb_5.default.Dynamics.b2BodyDef;
+            b2FixtureDef = box2dweb_5.default.Dynamics.b2FixtureDef;
+            b2Body = box2dweb_5.default.Dynamics.b2Body;
+            b2CircleShape = box2dweb_5.default.Collision.Shapes.b2CircleShape;
             Probe = class Probe {
                 constructor(env, args) {
                     this.env = env;
@@ -771,11 +702,81 @@ System.register("Probe", ["box2dweb", "utils"], function (exports_12, context_12
                     this.labelTextBlock.text = JSON.stringify(this.state, null, 4);
                 }
             };
-            exports_12("Probe", Probe);
+            exports_11("Probe", Probe);
+        }
+    };
+});
+System.register("Star", ["box2dweb"], function (exports_12, context_12) {
+    var box2dweb_6, b2BodyDef, b2FixtureDef, b2Body, b2CircleShape, Star;
+    var __moduleName = context_12 && context_12.id;
+    return {
+        setters: [
+            function (box2dweb_6_1) {
+                box2dweb_6 = box2dweb_6_1;
+            }
+        ],
+        execute: function () {
+            b2BodyDef = box2dweb_6.default.Dynamics.b2BodyDef;
+            b2FixtureDef = box2dweb_6.default.Dynamics.b2FixtureDef;
+            b2Body = box2dweb_6.default.Dynamics.b2Body;
+            b2CircleShape = box2dweb_6.default.Collision.Shapes.b2CircleShape;
+            Star = class Star {
+                constructor(env, args) {
+                    this.env = env;
+                    this.body = env.physics.world.CreateBody((() => {
+                        const bodyDef = new b2BodyDef();
+                        bodyDef.type = b2Body.b2_dynamicBody;
+                        bodyDef.position.Set(args.position.x, args.position.y);
+                        bodyDef.linearVelocity.Set(args.linearVelocity.x, args.linearVelocity.y);
+                        bodyDef.angularVelocity = args.angularVelocity;
+                        bodyDef.angle = args.angle;
+                        return bodyDef;
+                    })());
+                    this.fixture = this.body.CreateFixture((() => {
+                        const fixDef = new b2FixtureDef();
+                        fixDef.density = args.density;
+                        fixDef.friction = 1.0;
+                        fixDef.restitution = .1;
+                        fixDef.shape = new b2CircleShape(args.radius);
+                        return fixDef;
+                    })());
+                    this.mesh = BABYLON.MeshBuilder.CreateSphere("", { segments: 4, diameter: args.radius * 2 }, this.env.graphics.scene);
+                    const m = new BABYLON.StandardMaterial("", env.graphics.scene);
+                    m.emissiveColor = new BABYLON.Color3(1, 1, 1);
+                    this.mesh.material = m;
+                    this.light = new BABYLON.PointLight("", new BABYLON.Vector3(0, 0, 0), this.env.graphics.scene);
+                    this.mesh.outlineColor = new BABYLON.Color3(0, 0, 1);
+                    this.mesh.outlineWidth = .05;
+                    this.mesh.actionManager = new BABYLON.ActionManager(this.env.graphics.scene);
+                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOverTrigger, evt => {
+                        this.mesh.renderOutline = true;
+                    }));
+                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPointerOutTrigger, evt => {
+                        this.mesh.renderOutline = false;
+                    }));
+                    this.mesh.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, evt => {
+                        this.env.graphics.camera.lockedTarget = this.mesh;
+                    }));
+                    this.updateSubscription = env.updateObservable.subscribe(dt => this.update(dt));
+                    this.renderSubscription = env.renderObservable.subscribe(() => this.render());
+                }
+                update(dt) {
+                    //
+                }
+                render() {
+                    this.mesh.position.x = this.body.GetPosition().x;
+                    this.mesh.position.z = this.body.GetPosition().y;
+                    this.mesh.rotation.y = this.body.GetAngle();
+                    this.light.position.x = this.body.GetPosition().x;
+                    this.light.position.z = this.body.GetPosition().y;
+                }
+            };
+            exports_12("Star", Star);
         }
     };
 });
 System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb"], function (exports_13, context_13) {
+    var Star_1, Planetoid_1, Probe_1, box2dweb_7, b2Vec2;
     var __moduleName = context_13 && context_13.id;
     function getRandomNorm() {
         const a = Math.random() * 2 * Math.PI;
@@ -898,7 +899,6 @@ System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb"], functi
         env.graphics.camera.lockedTarget = earth.mesh;
     }
     exports_13("default", default_1);
-    var Star_1, Planetoid_1, Probe_1, box2dweb_7, b2Vec2;
     return {
         setters: [
             function (Star_1_1) {
@@ -920,8 +920,8 @@ System.register("maps/map01", ["Star", "Planetoid", "Probe", "box2dweb"], functi
     };
 });
 System.register("main", ["Environment", "maps/map01"], function (exports_14, context_14) {
-    var __moduleName = context_14 && context_14.id;
     var Environment_1, env, map01_1;
+    var __moduleName = context_14 && context_14.id;
     return {
         setters: [
             function (Environment_1_1) {
@@ -939,8 +939,8 @@ System.register("main", ["Environment", "maps/map01"], function (exports_14, con
     };
 });
 System.register("physics/Energy", ["box2dweb"], function (exports_15, context_15) {
-    var __moduleName = context_15 && context_15.id;
     var box2dweb_8, b2Vec2, Energy;
+    var __moduleName = context_15 && context_15.id;
     return {
         setters: [
             function (box2dweb_8_1) {
@@ -982,8 +982,8 @@ System.register("physics/Energy", ["box2dweb"], function (exports_15, context_15
 });
 // todo
 System.register("physics/SolarPower", ["box2dweb"], function (exports_16, context_16) {
-    var __moduleName = context_16 && context_16.id;
     var box2dweb_9, b2Vec2, SolarPower;
+    var __moduleName = context_16 && context_16.id;
     return {
         setters: [
             function (box2dweb_9_1) {
@@ -1034,73 +1034,6 @@ System.register("physics/SolarPower", ["box2dweb"], function (exports_16, contex
                 SolarPower.isConsumer = isConsumer;
             })(SolarPower || (SolarPower = {}));
             exports_16("SolarPower", SolarPower);
-        }
-    };
-});
-System.register("utils/Constructor", [], function (exports_17, context_17) {
-    var __moduleName = context_17 && context_17.id;
-    return {
-        setters: [],
-        execute: function () {
-        }
-    };
-});
-System.register("utils/IDestructable", [], function (exports_18, context_18) {
-    var __moduleName = context_18 && context_18.id;
-    return {
-        setters: [],
-        execute: function () {
-        }
-    };
-});
-System.register("utils/misc", [], function (exports_19, context_19) {
-    var __moduleName = context_19 && context_19.id;
-    function isVisible(elt) {
-        const style = window.getComputedStyle(elt);
-        return (style.width !== null && +style.width !== 0)
-            && (style.height !== null && +style.height !== 0)
-            && (style.opacity !== null && +style.opacity !== 0)
-            && style.display !== "none"
-            && style.visibility !== "hidden";
-    }
-    exports_19("isVisible", isVisible);
-    function adjust(x, ...applyAdjustmentList) {
-        for (const applyAdjustment of applyAdjustmentList) {
-            applyAdjustment(x);
-        }
-        return x;
-    }
-    exports_19("adjust", adjust);
-    function getRandomElement(array) {
-        return array[Math.floor(Math.random() * array.length)];
-    }
-    exports_19("getRandomElement", getRandomElement);
-    function* floodFill(base, getNeighbours, neighbourFilter) {
-        const queue = new Array();
-        const visited = new Set();
-        function enqueueUnique(element, wave) {
-            if (!visited.has(element)) {
-                queue.push({ element, wave });
-                visited.add(element);
-            }
-        }
-        for (const element of base) {
-            enqueueUnique(element, 0);
-        }
-        for (let entry = queue.shift(); entry; entry = queue.shift()) {
-            yield entry;
-            const { element, wave } = entry;
-            for (const t of getNeighbours(element)) {
-                if (neighbourFilter(t)) {
-                    enqueueUnique(t, wave + 1);
-                }
-            }
-        }
-    }
-    exports_19("floodFill", floodFill);
-    return {
-        setters: [],
-        execute: function () {
         }
     };
 });

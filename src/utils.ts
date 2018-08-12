@@ -9,7 +9,7 @@ export function isVisible(elt: Element) {
 
 export function adjust<T>(
     x: T,
-    ...applyAdjustmentList: Array<(x: T) => void>,
+    ...applyAdjustmentList: Array<(x: T) => void>
 ): T {
     for (const applyAdjustment of applyAdjustmentList) {
         applyAdjustment(x);
