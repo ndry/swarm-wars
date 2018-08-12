@@ -5,7 +5,6 @@
         "moduleResolution": "node",
         "target": "es2017",
         
-        "sourceMap": true,
         "watch": true,
 
         "noImplicitAny": true,
@@ -17,6 +16,8 @@
         "noUnusedParameters": false
     },
     "include": [
+        "./node_modules/babylonjs/babylon.d.ts",
+        "./node_modules/babylonjs-gui/babylon.gui.d.ts",
         "./src/**/*"
     ]
 }

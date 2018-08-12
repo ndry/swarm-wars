@@ -2,15 +2,17 @@
   "name": "swarm-wars",
   "private": true,
   "scripts": {
-    "start": "http-server . -p 45823 -o http://127.0.0.1:45823/public/ -c-1"
+    "start": "http-server . -p 45823 -o http://127.0.0.1:45823/public/ -c-1",
+    "cbuild": "tsc"
   },
   "devDependencies": {
     "@types/box2d": "0.0.32",
-    "@types/gl-matrix": "^2.3.2",
-    "@types/pixi.js": "^4.5.7",
     "@types/underscore": "^1.8.1",
+    "babylonjs": "^3.1.0-alpha3.7",
+    "babylonjs-gui": "^3.1.0-beta1.0",
     "http-server": "^0.10.0",
-    "rxjs": "^5.5.2"
+    "rxjs": "^5.5.11",
+    "typescript": "^3.0.1"
   },
   "dependencies": {}
 }

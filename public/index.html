@@ -6,6 +6,9 @@
 <title>swarm-wars</title>
 <link rel="icon" href="./favicon.ico">
 
+<script src="https://preview.babylonjs.com/babylon.js"></script>
+<script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/systemjs/0.20.19/system.js"></script>
 <script src="./system.config.js"></script>
 <script src="./app.js"></script>
@@ -17,45 +20,22 @@
     });
 </script>
 <style>
-    .display {
-        position: absolute; 
-        top: 0; 
-        left: 0;
-        width: 100%;
-        height: 100%;
+    html, body {
+        background-color: black;
+        overflow: hidden;
+        width   : 100%;
+        height  : 100%;
+        margin  : 0;
+        padding : 0;
     }
     #canvas {
-        background-color:#333333;
-        z-index: -50;
-    }
-    #canvas-debug {
-        background-color:rgba(0, 0, 0, 0);
-        z-index: -40;
-        visibility: hidden;
-    }
-    #gui {
-        background-color: rgba(255, 255, 255, 0.171);
-        padding: 10px;
-        color: white;
-        display: inline-block;
-    }
-    #gui *[type="button"] {
-        display: block;
+        width: 100%;
+        height: 100%;
     }
 </style>
 
 </head>
 <body>
-    <canvas id="canvas" class="display"></canvas>
-    <canvas id="canvas-debug" class="display"></canvas>
-    <div id="gui">
-        <div id="fps-label"></div>
-        <div id="body-count-label"></div>
-        <input id="pause-button" type="button" value="Pause" />
-        <input id="track-rotation-button" type="button" value="Track rotation" />
-        <input id="step-button" type="button" value="Step" />
-        <input id="toggle-gravity-button" type="button" value="Toggle gravity" />
-        
-    </div>
+    <canvas id="canvas"></canvas>
 </body>
 </html>
